@@ -1,0 +1,122 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    }
+  },
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "PowerVirtualAgents",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "conversation_id": {
+              "type": "string",
+              "description": "The conversation ID from System.Conversation.Id"
+            }
+          },
+          "required": ["conversation_id"]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Get_Transcript_from_DirectLine": {
+      "type": "Http",
+      "runAfter": {},
+      "inputs": {
+        "method": "GET",
+        "uri": "https://YOUR_ENVIRONMENT_ID.environment.api.powerplatform.com/powervirtualagents/botsbyschema/YOUR_BOT_SCHEMA/directline/conversations/@{triggerBody()?['conversation_id']}/activities",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://api.powerplatform.com"
+        }
+      }
+    },
+    "Parse_Activities": {
+      "type": "ParseJson",
+      "runAfter": {
+        "Get_Transcript_from_DirectLine": ["Succeeded"]
+      },
+      "inputs": {
+        "content": "@body('Get_Transcript_from_DirectLine')",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "activities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string" },
+                  "id": { "type": "string" },
+                  "timestamp": { "type": "string" },
+                  "from": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "role": { "type": "string" }
+                    }
+                  },
+                  "text": { "type": "string" }
+                }
+              }
+            },
+            "watermark": { "type": "string" }
+          }
+        }
+      }
+    },
+    "Format_Transcript_Markdown": {
+      "type": "Compose",
+      "runAfter": {
+        "Parse_Activities": ["Succeeded"]
+      },
+      "inputs": "@body('Parse_Activities')?['activities']"
+    },
+    "Response": {
+      "type": "Response",
+      "runAfter": {
+        "Format_Transcript_Markdown": ["Succeeded"]
+      },
+      "inputs": {
+        "statusCode": 200,
+        "body": {
+          "activities": "@outputs('Format_Transcript_Markdown')",
+          "message_count": "@length(body('Parse_Activities')?['activities'])",
+          "watermark": "@body('Parse_Activities')?['watermark']"
+        },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "activities": {
+              "type": "array",
+              "title": "Activities",
+              "description": "Array of conversation activities"
+            },
+            "message_count": {
+              "type": "integer",
+              "title": "Message Count",
+              "description": "Total number of messages"
+            },
+            "watermark": {
+              "type": "string",
+              "title": "Watermark",
+              "description": "Conversation watermark"
+            }
+          }
+        }
+      }
+    }
+  },
+  "outputs": {}
+}

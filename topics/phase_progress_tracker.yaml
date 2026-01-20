@@ -1,0 +1,86 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - mark phase complete
+      - phase finished
+      - completed research phase
+      - done with phase
+      - update progress
+
+  actions:
+    - kind: Question
+      id: askPhaseName
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.PhaseName
+      prompt: Which phase was completed?
+      entity:
+        kind: EmbeddedEntity
+        definition:
+          kind: ClosedListEntity
+          items:
+            - id: phase0
+              displayName: Phase 0 - Company Overview
+            - id: phase1
+              displayName: Phase 1 - Legal Entity
+            - id: phase2
+              displayName: Phase 2 - Products & Services
+            - id: phase3
+              displayName: Phase 3 - Leadership Discovery
+            - id: phase3b
+              displayName: Phase 3b - Executive LinkedIn
+            - id: phase3c
+              displayName: Phase 3c - Company Social
+            - id: phase4
+              displayName: Phase 4 - Industry Analysis
+            - id: phase5
+              displayName: Phase 5 - Financials
+            - id: phase6
+              displayName: Phase 6 - Recent Developments
+            - id: phase6b
+              displayName: Phase 6b - Patents
+            - id: phase6c
+              displayName: Phase 6c - SEC Filings
+            - id: phase6d
+              displayName: Phase 6d - Hiring Intelligence
+            - id: phase6e
+              displayName: Phase 6e - Events
+            - id: phase6f
+              displayName: Phase 6f - Government Contracts
+            - id: phase6g
+              displayName: Phase 6g - FDA Regulatory
+            - id: phase7
+              displayName: Phase 7 - Synthesis
+            - id: phase8
+              displayName: Phase 8 - Growth Scoring
+
+    - kind: SetVariable
+      id: updateCompletedPhases
+      variable: Global.CompletedPhases
+      value: =If(IsBlank(Global.CompletedPhases), Topic.PhaseName, Global.CompletedPhases & "," & Topic.PhaseName)
+
+    - kind: SetVariable
+      id: incrementPhaseCount
+      variable: Global.PhaseCount
+      value: =If(IsBlank(Global.PhaseCount), 1, Global.PhaseCount + 1)
+
+    - kind: SendActivity
+      id: confirmProgress
+      activity: |-
+        ✓ {Topic.PhaseName} marked complete.
+        Progress: {Global.PhaseCount}/18 phases completed.
+
+inputType:
+  properties:
+    PhaseName:
+      displayName: PhaseName
+      description: The name of the phase to mark complete
+      type: String
+      isRequired: false
+
+outputType:
+  properties: {}

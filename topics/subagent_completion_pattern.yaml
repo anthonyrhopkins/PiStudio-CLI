@@ -1,0 +1,165 @@
+# ============================================================
+# SUB-AGENT COMPLETION PATTERN
+# ============================================================
+# Add these actions to the END of each sub-agent topic.
+# This ensures proper phase tracking and continuation.
+# ============================================================
+
+# Example: Add this AFTER the sub-agent's main research logic
+
+# --- COMPLETION BLOCK (add to end of each sub-agent) ---
+
+    # Record this phase as completed
+    - kind: SetVariable
+      id: record_completion
+      variable: Global.CompletedPhases
+      value: =Concatenate(Global.CompletedPhases, If(IsBlank(Global.CompletedPhases), "", ", "), Text(Global.CurrentPhase))
+
+    # Increment phase counter
+    - kind: SetVariable
+      id: increment_phase
+      variable: Global.CurrentPhase
+      value: =Global.CurrentPhase + 1
+
+    # Log completion
+    - kind: SendActivity
+      id: send_phase_complete
+      activity: "✅ Phase {Global.CurrentPhase - 1} complete. Moving to phase {Global.CurrentPhase}..."
+
+    # Continue to next phase
+    - kind: BeginDialog
+      id: continue_router
+      dialog: my_bot.topic.PhaseRouter
+
+# --- END COMPLETION BLOCK ---
+
+
+# ============================================================
+# SKIP PATTERN (for conditional phases)
+# ============================================================
+# Use this when a sub-agent determines it should skip itself
+
+    # Record as skipped (not failed)
+    - kind: SetVariable
+      id: record_skip
+      variable: Global.SkippedPhases
+      value: =Concatenate(Global.SkippedPhases, If(IsBlank(Global.SkippedPhases), "", ", "), Text(Global.CurrentPhase))
+
+    # Increment and continue
+    - kind: SetVariable
+      id: increment_phase_skip
+      variable: Global.CurrentPhase
+      value: =Global.CurrentPhase + 1
+
+    - kind: SendActivity
+      id: send_skip
+      activity: "⏭️ Phase {Global.CurrentPhase - 1} skipped (not applicable). Moving to phase {Global.CurrentPhase}..."
+
+    - kind: BeginDialog
+      id: continue_after_skip
+      dialog: my_bot.topic.PhaseRouter
+
+
+# ============================================================
+# FAILURE PATTERN (when research fails)
+# ============================================================
+# Use this when a sub-agent encounters an error or can't find data
+
+    # Record as failed
+    - kind: SetVariable
+      id: record_failure
+      variable: Global.FailedPhases
+      value: =Concatenate(Global.FailedPhases, If(IsBlank(Global.FailedPhases), "", ", "), Text(Global.CurrentPhase))
+
+    # Increment and continue (don't block other phases)
+    - kind: SetVariable
+      id: increment_phase_fail
+      variable: Global.CurrentPhase
+      value: =Global.CurrentPhase + 1
+
+    - kind: SendActivity
+      id: send_failure
+      activity: "❌ Phase {Global.CurrentPhase - 1} failed. Continuing to phase {Global.CurrentPhase}..."
+
+    - kind: BeginDialog
+      id: continue_after_fail
+      dialog: my_bot.topic.PhaseRouter
+
+
+# ============================================================
+# FULL SUB-AGENT EXAMPLE: Leadership_Discovery
+# ============================================================
+# This shows the complete structure of a sub-agent with completion logic
+
+kind: AgentDialog
+response:
+  activity:
+  mode: Generated
+
+beginDialog:
+  kind: OnToolSelected
+  id: main
+  description: Discovers executive team members for a company.
+
+settings:
+  instructions: |-
+    You are a leadership research specialist. Find the executive team.
+
+    # Inputs
+    - Company: {Topic.company_name}
+    - Domain: {Topic.domain}
+
+    # Task
+    1. Search for CEO, CFO, CTO, COO, and board members
+    2. Find their titles, tenure, and background
+    3. Return structured JSON with leadership data
+
+    # Output Format
+    Return JSON: { "executives": [...], "board": [...] }
+
+inputType:
+  properties:
+    company_name:
+      displayName: company_name
+      type: String
+      isRequired: true
+    domain:
+      displayName: domain
+      type: String
+      isRequired: true
+
+outputType:
+  properties:
+    leadership_data:
+      displayName: leadership_data
+      type: String
+
+# After the agent generates its response, add completion logic:
+# (This needs to be added to the topic's action flow)
+
+# --- Add after the AgentDialog completes ---
+postActions:
+  # Store results in global variable for later use
+  - kind: SetVariable
+    id: store_leadership
+    variable: Global.LeadershipData
+    value: =Topic.leadership_data
+
+  # === COMPLETION BLOCK ===
+  - kind: SetVariable
+    id: record_completion
+    variable: Global.CompletedPhases
+    value: =Concatenate(Global.CompletedPhases, If(IsBlank(Global.CompletedPhases), "", ", "), "Leadership")
+
+  - kind: SetVariable
+    id: increment_phase
+    variable: Global.CurrentPhase
+    value: =Global.CurrentPhase + 1
+
+  - kind: SendActivity
+    id: send_complete
+    activity: "✅ Leadership discovery complete. Found executives for {Global.CompanyName}. Moving to phase {Global.CurrentPhase}..."
+
+  - kind: BeginDialog
+    id: continue_router
+    dialog: my_bot.topic.PhaseRouter

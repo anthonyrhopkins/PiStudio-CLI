@@ -1,0 +1,15 @@
+kind: AdaptiveDialog
+modelDescription: Phase router for research execution
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    displayName: Phase Router Internal
+    triggerQueries:
+      - __internal_phase_router__
+  actions:
+    - kind: SendActivity
+      id: sendActivity_test
+      activity: Phase Router called - Phase {Global.CurrentPhase}
+inputType: {}
+outputType: {}

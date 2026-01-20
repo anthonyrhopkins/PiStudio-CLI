@@ -1,0 +1,67 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - skip this phase
+      - skip patent research
+      - skip SEC filings
+      - this company isn't public
+      - not applicable
+      - skip government contracts
+      - skip FDA
+      - company is private
+      - no patents to search
+
+  actions:
+    - kind: Question
+      id: askWhichPhase
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.PhaseToSkip
+      prompt: Which phase should I skip?
+      entity:
+        kind: EmbeddedEntity
+        definition:
+          kind: ClosedListEntity
+          items:
+            - id: patents
+              displayName: Phase 6b - Patents (non-tech company)
+            - id: sec
+              displayName: Phase 6c - SEC Filings (private company)
+            - id: govcontracts
+              displayName: Phase 6f - Government Contracts
+            - id: fda
+              displayName: Phase 6g - FDA Regulatory (non-healthcare)
+            - id: events
+              displayName: Phase 6e - Events/Conferences
+
+    - kind: SetVariable
+      id: updateSkippedPhases
+      variable: Global.SkippedPhases
+      value: =If(IsBlank(Global.SkippedPhases), Topic.PhaseToSkip, Global.SkippedPhases & "," & Topic.PhaseToSkip)
+
+    - kind: SetVariable
+      id: incrementSkipCount
+      variable: Global.SkippedCount
+      value: =If(IsBlank(Global.SkippedCount), 1, Global.SkippedCount + 1)
+
+    - kind: SendActivity
+      id: confirmSkip
+      activity: |-
+        ⏭ Skipped: {Topic.PhaseToSkip}
+        Reason: Not applicable to this company type.
+        Continuing with remaining phases...
+
+inputType:
+  properties:
+    PhaseToSkip:
+      displayName: PhaseToSkip
+      description: The phase to skip
+      type: String
+      isRequired: false
+
+outputType:
+  properties: {}

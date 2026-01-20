@@ -1,0 +1,199 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "connectionName": "shared-sharepointonl-200e637f-a72b-4c8e-b4d8-d8c822b50989",
+        "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "When_an_item_is_created_or_modified": {
+          "recurrence": {
+            "interval": 1,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "dataset": "https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE",
+              "table": "5fc3af3f-751b-4eb4-a363-2432365b34a5"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "operationId": "GetOnUpdatedItems",
+              "connectionName": "shared_sharepointonline"
+            }
+          }
+        }
+      },
+      "actions": {
+        "Initialize_variable_-_FileID": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "FileID",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "runAfter": {}
+        },
+        "Scope_-_Try_get_existing_file": {
+          "type": "Scope",
+          "actions": {
+            "Get_file_metadata_using_path": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "dataset": "https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE",
+                  "path": "/SAPRadar/@{triggerBody()?['CompanyName']}.xlsx"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "operationId": "GetFileMetadataByPath",
+                  "connectionName": "shared_sharepointonline",
+                  "connectionReferenceName": "shared_sharepointonline"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_-_FileID": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Set_FileID_-_existing_file": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "FileID",
+            "value": "@{outputs('Get_file_metadata_using_path')?['body']?['Id']}"
+          },
+          "runAfter": {
+            "Scope_-_Try_get_existing_file": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Scope_-_Create_new_file_from_template": {
+          "type": "Scope",
+          "actions": {
+            "Get_template_file_content": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "dataset": "https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE",
+                  "path": "/SAPRadar/SAP_Radar_Company_Template.xlsx",
+                  "inferContentType": true
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "operationId": "GetFileContentByPath",
+                  "connectionName": "shared_sharepointonline",
+                  "connectionReferenceName": "shared_sharepointonline"
+                }
+              },
+              "runAfter": {}
+            },
+            "Create_file": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "dataset": "https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE",
+                  "folderPath": "/SAPRadar",
+                  "name": "@{triggerBody()?['CompanyName']}.xlsx",
+                  "body": "@body('Get_template_file_content')"
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "operationId": "CreateFile",
+                  "connectionName": "shared_sharepointonline",
+                  "connectionReferenceName": "shared_sharepointonline"
+                }
+              },
+              "runAfter": {
+                "Get_template_file_content": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Update_file_properties": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "dataset": "https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE",
+                  "table": "SAPRadar",
+                  "id": "@body('Create_file')?['ItemId']",
+                  "item": {
+                    "CompanyName": "@triggerBody()?['CompanyName']",
+                    "CompanyPrimaryDomain": "@triggerBody()?['CompanyPrimaryDomain']"
+                  }
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "connectionName": "shared_sharepointonline",
+                  "connectionReferenceName": "shared_sharepointonline"
+                }
+              },
+              "runAfter": {
+                "Create_file": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Set_FileID_-_new_file": {
+              "type": "SetVariable",
+              "inputs": {
+                "name": "FileID",
+                "value": "@{body('Create_file')?['Id']}"
+              },
+              "runAfter": {
+                "Update_file_properties": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "runAfter": {
+            "Scope_-_Try_get_existing_file": [
+              "Failed"
+            ]
+          }
+        },
+        "Response_-_File_ID": {
+          "type": "Compose",
+          "inputs": "@variables('FileID')",
+          "runAfter": {
+            "Set_FileID_-_existing_file": [
+              "Succeeded",
+              "Skipped"
+            ],
+            "Scope_-_Create_new_file_from_template": [
+              "Succeeded",
+              "Skipped"
+            ]
+          }
+        }
+      },
+      "outputs": {}
+    }
+  }
+}

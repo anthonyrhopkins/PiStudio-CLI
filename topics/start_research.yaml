@@ -1,0 +1,214 @@
+kind: AdaptiveDialog
+modelDescription: >-
+  This topic handles requests to research a company. It collects company name,
+  domain, and optional parameters, then initializes all global variables and
+  kicks off the Phase Router to begin the 12-phase research process.
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - research a company
+      - company profile
+      - investigate a business
+      - tell me about a company
+      - analyze this company
+      - start research on
+      - generate company intel
+      - research
+      - profile
+
+  actions:
+    # ========================================
+    # STEP 1: Collect Company Information
+    # ========================================
+
+    - kind: Question
+      id: question_CompanyName
+      interruptionPolicy:
+        allowInterruption: false
+      variable: init:Topic.CompanyName
+      prompt: What is the name of the company you want to research?
+      entity: StringPrebuiltEntity
+
+    - kind: Question
+      id: question_Domain
+      interruptionPolicy:
+        allowInterruption: false
+      variable: init:Topic.Domain
+      prompt: What is the company's website domain (e.g., microsoft.com)?
+      entity: StringPrebuiltEntity
+
+    # Optional: Stock ticker
+    - kind: Question
+      id: question_Ticker
+      interruptionPolicy:
+        allowInterruption: true
+      variable: init:Topic.Ticker
+      prompt: "Stock ticker symbol? (Leave blank for private companies, say 'skip' or 'none')"
+      entity: StringPrebuiltEntity
+
+    # Optional: Industry type for skip logic
+    - kind: Question
+      id: question_Industry
+      interruptionPolicy:
+        allowInterruption: true
+      variable: init:Topic.Industry
+      prompt: "What industry? (e.g., healthcare, technology, manufacturing - helps determine relevant research phases)"
+      entity: StringPrebuiltEntity
+
+    # ========================================
+    # STEP 2: Initialize Global Variables
+    # ========================================
+
+    # Core company info
+    - kind: SetVariable
+      id: setVar_CompanyName
+      variable: Global.CompanyName
+      value: =Topic.CompanyName
+
+    - kind: SetVariable
+      id: setVar_Domain
+      variable: Global.Domain
+      value: =Topic.Domain
+
+    # Handle ticker (normalize blank/skip/none to empty)
+    - kind: ConditionGroup
+      id: normalize_ticker
+      conditions:
+        - id: ticker_skip
+          condition: =Or(IsBlank(Topic.Ticker), Topic.Ticker = "skip", Topic.Ticker = "none", Topic.Ticker = "n/a")
+          actions:
+            - kind: SetVariable
+              id: setVar_Ticker_Empty
+              variable: Global.Ticker
+              value: ""
+      elseActions:
+        - kind: SetVariable
+          id: setVar_Ticker
+          variable: Global.Ticker
+          value: =Topic.Ticker
+
+    - kind: SetVariable
+      id: setVar_Industry
+      variable: Global.Industry
+      value: =Topic.Industry
+
+    # Phase tracking
+    - kind: SetVariable
+      id: setVar_CurrentPhase
+      variable: Global.CurrentPhase
+      value: =0
+
+    - kind: SetVariable
+      id: setVar_CompletedPhases
+      variable: Global.CompletedPhases
+      value: ""
+
+    - kind: SetVariable
+      id: setVar_SkippedPhases
+      variable: Global.SkippedPhases
+      value: ""
+
+    - kind: SetVariable
+      id: setVar_FailedPhases
+      variable: Global.FailedPhases
+      value: ""
+
+    - kind: SetVariable
+      id: setVar_ResearchComplete
+      variable: Global.ResearchComplete
+      value: =false
+
+    # ========================================
+    # STEP 3: Determine Skip Flags
+    # ========================================
+
+    # Skip FDA if not healthcare/pharma/biotech
+    - kind: ConditionGroup
+      id: check_fda_skip
+      conditions:
+        - id: is_healthcare
+          condition: =Or(Contains(Lower(Topic.Industry), "health"), Contains(Lower(Topic.Industry), "pharma"), Contains(Lower(Topic.Industry), "biotech"), Contains(Lower(Topic.Industry), "medical"))
+          actions:
+            - kind: SetVariable
+              id: setVar_SkipFDA_false
+              variable: Global.SkipFDA
+              value: =false
+      elseActions:
+        - kind: SetVariable
+          id: setVar_SkipFDA_true
+          variable: Global.SkipFDA
+          value: =true
+
+    # Default other skips to false (can be set by user later)
+    - kind: SetVariable
+      id: setVar_SkipPatents
+      variable: Global.SkipPatents
+      value: =false
+
+    - kind: SetVariable
+      id: setVar_SkipGovContracts
+      variable: Global.SkipGovContracts
+      value: =false
+
+    # ========================================
+    # STEP 4: Confirmation & Start
+    # ========================================
+
+    - kind: SendActivity
+      id: sendActivity_Confirmation
+      activity: |
+        **Starting Research on {Global.CompanyName}**
+
+        **Configuration:**
+        • Domain: {Global.Domain}
+        • Ticker: {If(IsBlank(Global.Ticker), "None (private company)", Global.Ticker)}
+        • Industry: {Global.Industry}
+
+        **Auto-Skip:**
+        • SEC Filings: {If(IsBlank(Global.Ticker), "Yes (no ticker)", "No")}
+        • FDA Regulation: {If(Global.SkipFDA, "Yes (not healthcare)", "No")}
+
+        Starting Phase 0 of 11...
+
+    # ========================================
+    # STEP 5: Kick off Phase Router
+    # ========================================
+
+    - kind: BeginDialog
+      id: start_PhaseRouter
+      dialog: my_bot.topic.phase_router
+
+# Input/Output schema for external triggers (Power Automate)
+inputType:
+  properties:
+    CompanyName:
+      displayName: Company Name
+      description: The name of the company to research
+      type: String
+      isRequired: true
+
+    Domain:
+      displayName: Domain
+      description: The company website domain (e.g., microsoft.com)
+      type: String
+      isRequired: true
+
+    Ticker:
+      displayName: Stock Ticker
+      description: Stock ticker symbol (optional, for public companies)
+      type: String
+
+    Industry:
+      displayName: Industry
+      description: Industry type (helps determine relevant phases)
+      type: String
+
+outputType:
+  properties:
+    ResearchComplete:
+      displayName: Research Complete
+      description: True when all phases have finished
+      type: Boolean

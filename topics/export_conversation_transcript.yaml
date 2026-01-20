@@ -1,0 +1,82 @@
+kind: AdaptiveDialog
+
+# Exports the current conversation transcript using DirectLine API
+# Requires a Power Automate flow that can authenticate and call the API
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - export transcript
+      - save conversation
+      - download transcript
+      - get conversation history
+      - export this session
+
+  actions:
+    - kind: ConditionGroup
+      id: checkActiveResearch
+      conditions:
+        - id: noResearch
+          condition: =IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: noResearchMessage
+              activity: No active research session to export.
+
+        - id: hasResearch
+          condition: =!IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: startExport
+              activity: |
+                📤 Exporting conversation transcript for {Global.CompanyName}...
+
+            # Get current conversation ID from system
+            - kind: SetVariable
+              id: getConversationId
+              variable: Topic.ConversationId
+              value: =System.Conversation.Id
+
+            # Call the transcript export flow
+            - kind: BeginDialog
+              id: callTranscriptExport
+              dialog: my_bot.action.Export_Conversation_Transcript
+              input:
+                conversation_id: =Topic.ConversationId
+                company_name: =Global.CompanyName
+                environment_url: =System.Bot.EnvironmentUrl
+                include_tool_calls: true
+                include_knowledge_queries: true
+              output:
+                transcript_url: Topic.TranscriptUrl
+                message_count: Topic.MessageCount
+                duration_seconds: Topic.DurationSeconds
+
+            # Append transcript summary to report
+            - kind: BeginDialog
+              id: appendTranscriptToReport
+              dialog: my_bot.topic.Auto_Append_Report
+              input:
+                PhaseNumber: "9"
+                PhaseName: "Conversation Transcript"
+                Findings: =Concatenate("Full conversation transcript exported.", Char(10), "Messages: ", Text(Topic.MessageCount), Char(10), "Duration: ", Text(Topic.DurationSeconds), " seconds", Char(10), "Transcript URL: ", Topic.TranscriptUrl)
+                Confidence: "High"
+
+            - kind: SendActivity
+              id: exportComplete
+              activity: |
+                ✅ Transcript exported successfully!
+
+                📊 Stats:
+                - Messages: {Topic.MessageCount}
+                - Duration: {Topic.DurationSeconds} seconds
+
+                📎 Download: {Topic.TranscriptUrl}
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

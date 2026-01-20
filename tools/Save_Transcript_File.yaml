@@ -1,0 +1,58 @@
+kind: ConnectorAction
+schemaName: my_bot.action.Save_Transcript_File
+displayName: Save Transcript File
+
+# Saves formatted conversation transcript to SharePoint
+
+description: |
+  Saves the conversation transcript as a markdown file in SharePoint.
+  Called after Get_Conversation_Transcript to persist the history.
+
+connector:
+  name: SharePoint
+  connectionReference: shared_sharepointonline
+
+operation:
+  operationId: CreateFile
+  parameters:
+    dataset: https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE Copilot
+    folderPath: /Shared Documents/Research Reports/Transcripts
+    name: "{company_name}_Transcript_{timestamp}.md"
+    body: "{transcript_content}"
+
+inputs:
+  - name: company_name
+    displayName: Company Name
+    description: Name of the company for file naming
+    type: String
+    required: true
+
+  - name: timestamp
+    displayName: Timestamp
+    description: Timestamp for file naming (YYYYMMDD_HHmmss format)
+    type: String
+    required: true
+
+  - name: transcript_content
+    displayName: Transcript Content
+    description: Formatted markdown transcript content
+    type: String
+    required: true
+
+outputs:
+  - name: file_url
+    displayName: File URL
+    description: URL to access the saved transcript
+    type: String
+
+  - name: file_path
+    displayName: File Path
+    description: SharePoint path to the file
+    type: String
+
+aiDescription: |
+  Use this tool to save a conversation transcript to SharePoint.
+  Call Get_Conversation_Transcript first to get the activities,
+  then format as markdown and save with this tool.
+
+  File is saved to: /Research Reports/Transcripts/{company}_Transcript_{timestamp}.md

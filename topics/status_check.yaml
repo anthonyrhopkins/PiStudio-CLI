@@ -1,0 +1,47 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - show progress
+      - what phases are done
+      - status check
+      - where are we
+      - how far along
+      - research status
+      - what's completed
+
+  actions:
+    - kind: ConditionGroup
+      id: checkIfStarted
+      conditions:
+        - id: notStarted
+          condition: =IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: noResearchStarted
+              activity: No research in progress. Say "start research" with a company name to begin.
+
+        - id: inProgress
+          condition: =!IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: showStatus
+              activity: |-
+                📊 Research Status for {Global.CompanyName}
+                ─────────────────────────────────
+                ✓ Completed: {If(IsBlank(Global.PhaseCount), 0, Global.PhaseCount)}/18 phases
+                ⏭ Skipped: {If(IsBlank(Global.SkippedCount), 0, Global.SkippedCount)} phases
+                ✗ Failed: {If(IsBlank(Global.FailedCount), 0, Global.FailedCount)} phases
+
+                Completed phases: {If(IsBlank(Global.CompletedPhases), "None yet", Global.CompletedPhases)}
+
+                Skipped phases: {If(IsBlank(Global.SkippedPhases), "None", Global.SkippedPhases)}
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

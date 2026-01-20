@@ -1,0 +1,115 @@
+# ══════════════════════════════════════════════════════════════
+# Internal docs and client-specific templates (kept local only)
+# ══════════════════════════════════════════════════════════════
+docs/
+templates/sap_rfp/
+
+# ══════════════════════════════════════════════════════════════
+# Reports and exports (may contain sensitive conversation data)
+# ══════════════════════════════════════════════════════════════
+reports/
+exports/
+*.export/
+
+# ══════════════════════════════════════════════════════════════
+# Local backups/state (may contain sensitive bot data)
+# ══════════════════════════════════════════════════════════════
+backups/
+environments/
+
+# ══════════════════════════════════════════════════════════════
+# Config files with secrets
+# ══════════════════════════════════════════════════════════════
+config/*.json
+!config/*.example.json
+.env
+.env.*
+!.env.example
+
+# ══════════════════════════════════════════════════════════════
+# Auth tokens and credentials
+# ══════════════════════════════════════════════════════════════
+
+# pistudio auth tokens (stored per-profile by auth.sh)
+**/pistudio/tokens/
+
+# Session tokens (per-process, normally in $TMPDIR)
+pistudio-session-tokens*/
+
+# Generic credential files
+*.pem
+*.key
+*.p12
+*.pfx
+*_token.txt
+credentials.json
+*.keystore
+
+# OAuth / JWT artifacts
+*.jwt
+token_cache/
+
+# ══════════════════════════════════════════════════════════════
+# OS files
+# ══════════════════════════════════════════════════════════════
+.DS_Store
+Thumbs.db
+Desktop.ini
+._*
+
+# ══════════════════════════════════════════════════════════════
+# IDE / Editor
+# ══════════════════════════════════════════════════════════════
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# ══════════════════════════════════════════════════════════════
+# Claude Code (local settings only — CLAUDE.md is tracked)
+# ══════════════════════════════════════════════════════════════
+.claude/
+
+# ══════════════════════════════════════════════════════════════
+# Node (if scripts use npm)
+# ══════════════════════════════════════════════════════════════
+node_modules/
+package-lock.json
+
+# ══════════════════════════════════════════════════════════════
+# Logs
+# ══════════════════════════════════════════════════════════════
+*.log
+logs/
+
+# ══════════════════════════════════════════════════════════════
+# Temporary files
+# ══════════════════════════════════════════════════════════════
+temp/
+tmp/
+*.tmp
+
+# ══════════════════════════════════════════════════════════════
+# Conversation data (may contain sensitive info)
+# ══════════════════════════════════════════════════════════════
+scripts/conversations.json
+conversations.json
+
+# ══════════════════════════════════════════════════════════════
+# One-off local maintenance scripts (may contain hardcoded paths/IDs)
+# ══════════════════════════════════════════════════════════════
+scripts/fix-agent-inputs*.py
+scripts/fix-agent-inputs*.sh
+
+# ══════════════════════════════════════════════════════════════
+# Playwright MCP (generated screenshots)
+# ══════════════════════════════════════════════════════════════
+.playwright-mcp/
+
+# ══════════════════════════════════════════════════════════════
+# GIF recordings (browser automation artifacts)
+# ══════════════════════════════════════════════════════════════
+*.gif
+

@@ -1,0 +1,56 @@
+kind: ConnectorAction
+schemaName: my_bot.action.Create_Report_File
+displayName: Create Report File
+
+# SharePoint - Create file action
+# Creates a new markdown report file in SharePoint
+
+description: |
+  Creates a new research report markdown file in SharePoint.
+  Called at the start of research to initialize the report with header information.
+
+connector:
+  name: SharePoint
+  connectionReference: shared_sharepointonline
+
+operation:
+  operationId: CreateFile
+  parameters:
+    dataset: https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE Copilot
+    folderPath: /Shared Documents/Research Reports
+    name: "{company_name}_Research_Report.md"
+    body: "{initial_content}"
+
+inputs:
+  - name: company_name
+    displayName: Company Name
+    description: Name of the company being researched
+    type: String
+    required: true
+
+  - name: initial_content
+    displayName: Initial Content
+    description: Markdown header content for the report
+    type: String
+    required: true
+
+outputs:
+  - name: file_id
+    displayName: File ID
+    description: SharePoint file identifier
+    type: String
+
+  - name: file_path
+    displayName: File Path
+    description: Full path to the created file
+    type: String
+
+  - name: file_url
+    displayName: File URL
+    description: Web URL to access the file
+    type: String
+
+aiDescription: |
+  Use this tool to create a new research report file at the start of company research.
+  Pass the company name and the initial markdown content (header with company details).
+  Returns the file path which should be stored in Global.ReportFilePath for subsequent appends.

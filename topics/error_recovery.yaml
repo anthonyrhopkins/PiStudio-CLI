@@ -1,0 +1,98 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - phase failed
+      - agent error
+      - something went wrong
+      - retry failed phase
+      - research failed
+      - sub-agent timeout
+      - no data returned
+
+  actions:
+    - kind: Question
+      id: askFailedPhase
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.FailedPhase
+      prompt: Which phase encountered an error?
+      entity: StringPrebuiltEntity
+
+    - kind: Question
+      id: askErrorReason
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.ErrorReason
+      prompt: What was the error? (e.g., timeout, no data, API error)
+      entity: StringPrebuiltEntity
+
+    - kind: SetVariable
+      id: logFailedPhase
+      variable: Global.FailedPhases
+      value: =If(IsBlank(Global.FailedPhases), Topic.FailedPhase & ":" & Topic.ErrorReason, Global.FailedPhases & "," & Topic.FailedPhase & ":" & Topic.ErrorReason)
+
+    - kind: SetVariable
+      id: incrementFailCount
+      variable: Global.FailedCount
+      value: =If(IsBlank(Global.FailedCount), 1, Global.FailedCount + 1)
+
+    - kind: Question
+      id: askRetryOrSkip
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.RecoveryAction
+      prompt: Would you like to retry this phase or skip it and continue?
+      entity:
+        kind: EmbeddedEntity
+        definition:
+          kind: ClosedListEntity
+          items:
+            - id: retry
+              displayName: Retry the phase
+            - id: skip
+              displayName: Skip and continue
+            - id: stop
+              displayName: Stop research
+
+    - kind: ConditionGroup
+      id: handleRecoveryChoice
+      conditions:
+        - id: retryChosen
+          condition: =Topic.RecoveryAction = "retry"
+          actions:
+            - kind: SendActivity
+              id: retryMessage
+              activity: Retrying {Topic.FailedPhase}... Please wait.
+
+        - id: skipChosen
+          condition: =Topic.RecoveryAction = "skip"
+          actions:
+            - kind: SetVariable
+              id: addToSkipped
+              variable: Global.SkippedPhases
+              value: =If(IsBlank(Global.SkippedPhases), Topic.FailedPhase, Global.SkippedPhases & "," & Topic.FailedPhase)
+            - kind: SendActivity
+              id: skipMessage
+              activity: |-
+                ⏭ Skipped {Topic.FailedPhase} due to error.
+                Continuing with next phase...
+
+        - id: stopChosen
+          condition: =Topic.RecoveryAction = "stop"
+          actions:
+            - kind: SendActivity
+              id: stopMessage
+              activity: |-
+                Research paused. Current progress saved.
+                Say "show progress" to see completed phases.
+                Say "continue research" to resume later.
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

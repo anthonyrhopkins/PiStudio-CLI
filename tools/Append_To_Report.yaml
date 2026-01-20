@@ -1,0 +1,66 @@
+kind: ConnectorAction
+schemaName: my_bot.action.Append_To_Report
+displayName: Append To Report
+
+# This tool appends content to an existing SharePoint file
+# Note: SharePoint doesn't have native append, so this uses Update File
+# The bot should maintain Global.ResearchFindings and pass the full accumulated content
+
+description: |
+  Appends research findings to the company report file in SharePoint.
+  Called after each research phase completes to add new findings.
+
+  IMPORTANT: Since SharePoint doesn't support native append, this tool
+  REPLACES the file content. The bot must pass the COMPLETE accumulated
+  content (stored in Global.ResearchFindings) each time.
+
+connector:
+  name: SharePoint
+  connectionReference: shared_sharepointonline
+
+operation:
+  operationId: UpdateFile
+  parameters:
+    dataset: https://YOUR-TENANT.sharepoint.com/sites/YOUR-SITE Copilot
+    id: "{file_path}"
+    body: "{full_content}"
+
+inputs:
+  - name: file_path
+    displayName: File Path
+    description: Path to the report file (from Global.ReportFilePath)
+    type: String
+    required: true
+
+  - name: full_content
+    displayName: Full Content
+    description: Complete accumulated report content (from Global.ResearchFindings)
+    type: String
+    required: true
+
+  - name: phase_name
+    displayName: Phase Name
+    description: Name of the phase that just completed (for logging)
+    type: String
+    required: false
+
+outputs:
+  - name: success
+    displayName: Success
+    description: Whether the update succeeded
+    type: Boolean
+
+  - name: file_size
+    displayName: File Size
+    description: Updated file size in bytes
+    type: Number
+
+aiDescription: |
+  Use this tool to update the research report after each phase completes.
+  CRITICAL: Pass the FULL accumulated content from Global.ResearchFindings, not just new content.
+  The bot must concatenate new findings to Global.ResearchFindings before calling this tool.
+
+  Workflow:
+  1. After sub-agent returns findings, format as markdown section
+  2. Append formatted section to Global.ResearchFindings
+  3. Call this tool with full Global.ResearchFindings content

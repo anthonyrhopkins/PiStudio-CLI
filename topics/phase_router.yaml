@@ -1,0 +1,265 @@
+kind: AdaptiveDialog
+modelDescription: Internal routing topic that controls research phase execution. DO NOT call this directly - it is called automatically by Start Research and by sub-agents when they complete.
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    displayName: Phase Router Internal
+    triggerQueries:
+      - __internal_phase_router_do_not_trigger__
+  actions:
+    - kind: SendActivity
+      id: sendActivity_PhaseStatus
+      activity: Phase Router - Current phase is {Global.CurrentPhase}
+
+    - kind: ConditionGroup
+      id: conditionGroup_PhaseRouter
+      conditions:
+        - id: phase_0
+          condition: =Global.CurrentPhase = 0
+          actions:
+            - kind: SendActivity
+              id: send_phase0
+              activity: "[0/11] Discovering leadership team..."
+            - kind: BeginDialog
+              id: call_Leadership
+              dialog: my_bot.agent.Agent
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_1
+          condition: =Global.CurrentPhase = 1
+          actions:
+            - kind: SendActivity
+              id: send_phase1
+              activity: "[1/11] Finding executive social profiles..."
+            - kind: BeginDialog
+              id: call_SocialProfile
+              dialog: my_bot.agent.Agent_Rvi
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_2
+          condition: =Global.CurrentPhase = 2
+          actions:
+            - kind: SendActivity
+              id: send_phase2
+              activity: "[2/11] Finding company social accounts..."
+            - kind: BeginDialog
+              id: call_CompanyProfiles
+              dialog: my_bot.agent.Agent_qOR
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_3
+          condition: =Global.CurrentPhase = 3
+          actions:
+            - kind: SendActivity
+              id: send_phase3
+              activity: "[3/11] Analyzing industry and competitors..."
+            - kind: BeginDialog
+              id: call_IndustryAnalysis
+              dialog: my_bot.agent.Agent_kCm
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_4
+          condition: =Global.CurrentPhase = 4
+          actions:
+            - kind: SendActivity
+              id: send_phase4
+              activity: "[4/11] Analyzing financial performance..."
+            - kind: BeginDialog
+              id: call_FinancialPerformance
+              dialog: my_bot.agent.Agent_Xae
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_5
+          condition: =Global.CurrentPhase = 5
+          actions:
+            - kind: SendActivity
+              id: send_phase5
+              activity: "[5/11] Finding recent news and developments..."
+            - kind: BeginDialog
+              id: call_RecentDevelopments
+              dialog: my_bot.agent.Agent_Boe
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_6
+          condition: =Global.CurrentPhase = 6
+          actions:
+            - kind: ConditionGroup
+              id: check_skip_patents
+              conditions:
+                - id: skip_patents
+                  condition: =Global.SkipPatents = true
+                  actions:
+                    - kind: SendActivity
+                      id: send_skip_patents
+                      activity: "[6/11] SKIP - Patents not applicable"
+                    - kind: SetVariable
+                      id: increment_skip_patents
+                      variable: Global.CurrentPhase
+                      value: =Global.CurrentPhase + 1
+                    - kind: BeginDialog
+                      id: continue_after_skip_patents
+                      dialog: my_bot.topic.PhaseRouter
+              elseActions:
+                - kind: SendActivity
+                  id: send_phase6
+                  activity: "[6/11] Analyzing patent portfolio..."
+                - kind: BeginDialog
+                  id: call_PatentIntelligence
+                  dialog: my_bot.agent.Agent_-zx
+                  input:
+                    company_name: =Global.CompanyName
+                    domain: =Global.Domain
+
+        - id: phase_7
+          condition: =Global.CurrentPhase = 7
+          actions:
+            - kind: ConditionGroup
+              id: check_skip_sec
+              conditions:
+                - id: skip_sec_no_ticker
+                  condition: =IsBlank(Global.Ticker)
+                  actions:
+                    - kind: SendActivity
+                      id: send_skip_sec
+                      activity: "[7/11] SKIP - SEC filings (no ticker)"
+                    - kind: SetVariable
+                      id: increment_skip_sec
+                      variable: Global.CurrentPhase
+                      value: =Global.CurrentPhase + 1
+                    - kind: BeginDialog
+                      id: continue_after_skip_sec
+                      dialog: my_bot.topic.PhaseRouter
+              elseActions:
+                - kind: SendActivity
+                  id: send_phase7
+                  activity: "[7/11] Analyzing SEC filings..."
+                - kind: BeginDialog
+                  id: call_SECFilings
+                  dialog: my_bot.agent.Agent_TJ6
+                  input:
+                    company_name: =Global.CompanyName
+                    domain: =Global.Domain
+                    ticker: =Global.Ticker
+
+        - id: phase_8
+          condition: =Global.CurrentPhase = 8
+          actions:
+            - kind: SendActivity
+              id: send_phase8
+              activity: "[8/11] Analyzing hiring trends..."
+            - kind: BeginDialog
+              id: call_HiringIntelligence
+              dialog: my_bot.agent.Agent_o4d
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_9
+          condition: =Global.CurrentPhase = 9
+          actions:
+            - kind: SendActivity
+              id: send_phase9
+              activity: "[9/11] Finding events and conferences..."
+            - kind: BeginDialog
+              id: call_EventsIntelligence
+              dialog: my_bot.agent.Agent_f2H
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+
+        - id: phase_10
+          condition: =Global.CurrentPhase = 10
+          actions:
+            - kind: ConditionGroup
+              id: check_skip_gov
+              conditions:
+                - id: skip_gov
+                  condition: =Global.SkipGovContracts = true
+                  actions:
+                    - kind: SendActivity
+                      id: send_skip_gov
+                      activity: "[10/11] SKIP - Government contracts not applicable"
+                    - kind: SetVariable
+                      id: increment_skip_gov
+                      variable: Global.CurrentPhase
+                      value: =Global.CurrentPhase + 1
+                    - kind: BeginDialog
+                      id: continue_after_skip_gov
+                      dialog: my_bot.topic.PhaseRouter
+              elseActions:
+                - kind: SendActivity
+                  id: send_phase10
+                  activity: "[10/11] Finding government contracts..."
+                - kind: BeginDialog
+                  id: call_GovContracts
+                  dialog: my_bot.agent.Agent_wvm
+                  input:
+                    company_name: =Global.CompanyName
+                    domain: =Global.Domain
+
+        - id: phase_11
+          condition: =Global.CurrentPhase = 11
+          actions:
+            - kind: ConditionGroup
+              id: check_skip_fda
+              conditions:
+                - id: skip_fda
+                  condition: =Global.SkipFDA = true
+                  actions:
+                    - kind: SendActivity
+                      id: send_skip_fda
+                      activity: "[11/11] SKIP - FDA regulation (not healthcare)"
+                    - kind: SetVariable
+                      id: increment_skip_fda
+                      variable: Global.CurrentPhase
+                      value: =Global.CurrentPhase + 1
+                    - kind: BeginDialog
+                      id: continue_after_skip_fda
+                      dialog: my_bot.topic.PhaseRouter
+              elseActions:
+                - kind: SendActivity
+                  id: send_phase11
+                  activity: "[11/11] Checking FDA regulatory activity..."
+                - kind: BeginDialog
+                  id: call_FDARegulation
+                  dialog: my_bot.agent.Agent_H5P
+                  input:
+                    company_name: =Global.CompanyName
+                    domain: =Global.Domain
+
+        - id: phase_12
+          condition: =Global.CurrentPhase >= 12
+          actions:
+            - kind: SendActivity
+              id: send_complete
+              activity: "RESEARCH COMPLETE for {Global.CompanyName}. All phases executed. Completed: {Global.CompletedPhases}. Skipped: {Global.SkippedPhases}. Failed: {Global.FailedPhases}"
+            - kind: SetVariable
+              id: set_research_complete
+              variable: Global.ResearchComplete
+              value: =true
+
+      elseActions:
+        - kind: SendActivity
+          id: send_invalid_phase
+          activity: "Invalid phase {Global.CurrentPhase}. Resetting to 0."
+        - kind: SetVariable
+          id: reset_phase
+          variable: Global.CurrentPhase
+          value: =0
+        - kind: BeginDialog
+          id: restart_router
+          dialog: my_bot.topic.PhaseRouter

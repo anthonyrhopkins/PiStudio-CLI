@@ -1,0 +1,96 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - write to report
+      - update report file
+      - append findings
+      - save to report
+      - log phase results
+
+  actions:
+    - kind: ConditionGroup
+      id: checkCompanyExists
+      conditions:
+        - id: noCompany
+          condition: =IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: noCompanyMessage
+              activity: No active research session. Start research first with a company name.
+
+        - id: hasCompany
+          condition: =!IsBlank(Global.CompanyName)
+          actions:
+            # Get current timestamp for report entry
+            - kind: SetVariable
+              id: setTimestamp
+              variable: Topic.Timestamp
+              value: =Text(Now(), "yyyy-MM-dd HH:mm:ss")
+
+            # Build the report section content
+            - kind: Question
+              id: askPhaseNumber
+              interruptionPolicy:
+                allowInterruption: false
+              variable: Topic.PhaseNumber
+              prompt: Which phase number is this? (0-8)
+              entity: StringPrebuiltEntity
+
+            - kind: Question
+              id: askPhaseName
+              interruptionPolicy:
+                allowInterruption: false
+              variable: Topic.PhaseName
+              prompt: What is the phase name?
+              entity: StringPrebuiltEntity
+
+            - kind: Question
+              id: askFindings
+              interruptionPolicy:
+                allowInterruption: false
+              variable: Topic.PhaseFindings
+              prompt: What are the findings to add to the report?
+              entity: StringPrebuiltEntity
+
+            # Format as markdown section
+            - kind: SetVariable
+              id: formatReportSection
+              variable: Topic.ReportSection
+              value: |
+                =Concatenate(
+                  "## Phase ", Topic.PhaseNumber, ": ", Topic.PhaseName, Char(10),
+                  "_Updated: ", Topic.Timestamp, "_", Char(10), Char(10),
+                  Topic.PhaseFindings, Char(10), Char(10),
+                  "---", Char(10), Char(10)
+                )
+
+            # Call the report writer connector action
+            - kind: BeginDialog
+              id: callReportWriter
+              dialog: my_bot.action.Append_To_Report_File
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+                section_content: =Topic.ReportSection
+                phase_number: =Topic.PhaseNumber
+
+            # Update global findings tracker
+            - kind: SetVariable
+              id: appendToFindings
+              variable: Global.ResearchFindings
+              value: =If(IsBlank(Global.ResearchFindings), Topic.ReportSection, Concatenate(Global.ResearchFindings, Topic.ReportSection))
+
+            - kind: SendActivity
+              id: confirmWrite
+              activity: |
+                Added Phase {Topic.PhaseNumber} ({Topic.PhaseName}) to report for {Global.CompanyName}.
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

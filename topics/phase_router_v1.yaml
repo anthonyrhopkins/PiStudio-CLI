@@ -1,0 +1,52 @@
+kind: AdaptiveDialog
+modelDescription: Phase router for research execution - routes to research agents based on current phase
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    displayName: Phase Router Internal
+    triggerQueries:
+      - __internal_phase_router__
+  actions:
+    - kind: SendActivity
+      id: sendActivity_PhaseStatus
+      activity: "Phase Router - Current phase: {Global.CurrentPhase}"
+
+    - kind: ConditionGroup
+      id: conditionGroup_PhaseRouter
+      conditions:
+        - id: phase_0
+          condition: =Global.CurrentPhase = 0
+          actions:
+            - kind: SendActivity
+              id: send_phase0
+              activity: "[0/11] Discovering leadership team..."
+
+            - kind: BeginDialog
+              id: call_Leadership
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+              dialog: my_bot.agent.Agent
+
+            - kind: SetVariable
+              id: increment_phase0
+              variable: Global.CurrentPhase
+              value: =1
+
+            - kind: SetVariable
+              id: track_phase0
+              variable: Global.CompletedPhases
+              value: =Global.CompletedPhases & "0,"
+
+            - kind: BeginDialog
+              id: continue_phase0
+              dialog: my_bot.topic.phase_router
+
+      elseActions:
+        - kind: SendActivity
+          id: send_complete
+          activity: "Research complete. Completed phases: {Global.CompletedPhases}"
+
+inputType: {}
+outputType: {}

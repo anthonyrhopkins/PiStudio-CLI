@@ -1,0 +1,94 @@
+kind: AdaptiveDialog
+
+# This topic is called programmatically by the main bot after each sub-agent completes
+# It appends findings to a single markdown report file in SharePoint/OneDrive
+
+beginDialog:
+  kind: OnInvokeActivity
+  id: main
+
+  actions:
+    - kind: ConditionGroup
+      id: validateInputs
+      conditions:
+        - id: missingInputs
+          condition: =Or(IsBlank(Topic.PhaseNumber), IsBlank(Topic.PhaseName), IsBlank(Topic.Findings))
+          actions:
+            - kind: SetVariable
+              id: setErrorResult
+              variable: Topic.Result
+              value: "error: missing required inputs"
+
+        - id: hasInputs
+          condition: =And(!IsBlank(Topic.PhaseNumber), !IsBlank(Topic.PhaseName), !IsBlank(Topic.Findings))
+          actions:
+            # Format timestamp
+            - kind: SetVariable
+              id: setTimestamp
+              variable: Topic.Timestamp
+              value: =Text(Now(), "yyyy-MM-dd HH:mm:ss")
+
+            # Determine confidence badge
+            - kind: SetVariable
+              id: setConfidenceBadge
+              variable: Topic.ConfidenceBadge
+              value: =If(Topic.Confidence = "High", "[HIGH CONFIDENCE]", If(Topic.Confidence = "Medium", "[MEDIUM CONFIDENCE]", "[LOW CONFIDENCE]"))
+
+            # Format the markdown section
+            - kind: SetVariable
+              id: formatMarkdown
+              variable: Topic.MarkdownSection
+              value: |
+                =Concatenate(
+                  "## Phase ", Topic.PhaseNumber, ": ", Topic.PhaseName, Char(10),
+                  "> ", Topic.ConfidenceBadge, " | Updated: ", Topic.Timestamp, Char(10), Char(10),
+                  Topic.Findings, Char(10), Char(10),
+                  If(!IsBlank(Topic.Sources), Concatenate("### Sources", Char(10), Topic.Sources, Char(10), Char(10)), ""),
+                  "---", Char(10), Char(10)
+                )
+
+            # Call SharePoint file append action
+            - kind: BeginDialog
+              id: appendToFile
+              dialog: my_bot.action.Append_To_Report_File
+              input:
+                file_name: =Concatenate(Global.CompanyName, "_Research_Report.md")
+                folder_path: /Research Reports
+                content_to_append: =Topic.MarkdownSection
+                company_name: =Global.CompanyName
+
+            # Update in-memory findings for synthesis
+            - kind: SetVariable
+              id: updateGlobalFindings
+              variable: Global.ResearchFindings
+              value: =If(IsBlank(Global.ResearchFindings), Topic.MarkdownSection, Concatenate(Global.ResearchFindings, Topic.MarkdownSection))
+
+            # Track that this phase wrote to report
+            - kind: SetVariable
+              id: setSuccessResult
+              variable: Topic.Result
+              value: =Concatenate("success: Phase ", Topic.PhaseNumber, " appended to report")
+
+inputType:
+  properties:
+    PhaseNumber:
+      type: String
+      displayName: Phase Number
+    PhaseName:
+      type: String
+      displayName: Phase Name
+    Findings:
+      type: String
+      displayName: Findings Content
+    Confidence:
+      type: String
+      displayName: Confidence Level
+    Sources:
+      type: String
+      displayName: Source URLs
+
+outputType:
+  properties:
+    Result:
+      type: String
+      displayName: Operation Result

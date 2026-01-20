@@ -1,0 +1,27 @@
+{
+  "defaultProfile": "dev",
+  "profiles": {
+    "dev": {
+      "name": "My DEV",
+      "user": "you@company.com",
+      "tenantId": "YOUR_TENANT_ID",
+      "environmentId": "YOUR_ENVIRONMENT_ID",
+      "environmentUrl": "https://YOUR_ENVIRONMENT_ID.environment.api.powerplatform.com",
+      "dataverseUrl": "https://YOUR_ORG.api.crm.dynamics.com",
+      "botId": "your_bot_schema_name",
+      "botName": "Your Copilot Name",
+      "protected": false
+    },
+    "prod": {
+      "name": "My PROD",
+      "user": "you@company.com",
+      "tenantId": "YOUR_TENANT_ID",
+      "environmentId": "YOUR_PROD_ENVIRONMENT_ID",
+      "environmentUrl": "https://YOUR_PROD_ENVIRONMENT_ID.environment.api.powerplatform.com",
+      "dataverseUrl": "https://YOUR_PROD_ORG.api.crm.dynamics.com",
+      "botId": "your_prod_bot_schema_name",
+      "botName": "Your PROD Copilot Name",
+      "protected": true
+    }
+  }
+}

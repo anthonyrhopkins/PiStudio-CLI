@@ -1,0 +1,63 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - generate final report
+      - compile findings
+      - create company profile
+      - summarize research
+      - finish research
+      - complete the profile
+      - give me the summary
+
+  actions:
+    - kind: ConditionGroup
+      id: checkResearchExists
+      conditions:
+        - id: noResearch
+          condition: =IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: noDataMessage
+              activity: No research data found. Start research first by providing a company name.
+
+        - id: hasResearch
+          condition: =!IsBlank(Global.CompanyName)
+          actions:
+            - kind: SendActivity
+              id: synthesisStart
+              activity: |-
+                📋 Compiling research findings for {Global.CompanyName}...
+
+                Phases completed: {If(IsBlank(Global.PhaseCount), 0, Global.PhaseCount)}/18
+                Phases skipped: {If(IsBlank(Global.SkippedCount), 0, Global.SkippedCount)}
+                Errors encountered: {If(IsBlank(Global.FailedCount), 0, Global.FailedCount)}
+
+            - kind: BeginDialog
+              id: callSynthesisAgent
+              dialog: my_bot.agent.Agent_Synthesis
+              input:
+                company_name: =Global.CompanyName
+                domain: =Global.Domain
+                completed_phases: =Global.CompletedPhases
+                skipped_phases: =Global.SkippedPhases
+                failed_phases: =Global.FailedPhases
+                raw_findings: =Global.ResearchFindings
+
+            - kind: SendActivity
+              id: reportComplete
+              activity: |-
+                ✅ Research complete for {Global.CompanyName}
+
+                Growth Propensity Score: {Global.GrowthScore}/100
+
+                Full profile compiled. Use "export report" to download.
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

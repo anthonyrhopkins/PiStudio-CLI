@@ -1,0 +1,106 @@
+# PiStudio CLI Skill
+
+Quick reference for managing Copilot Studio agents via command line.
+
+## Quick Start
+
+```bash
+# Login (device code flow — no m365/az CLI needed)
+bin/pistudio login -p dev
+
+# Check status
+bin/pistudio doctor -p dev
+bin/pistudio bots -p dev
+
+# Available profiles (from config/copilot-export.json)
+```
+
+## Common Workflows
+
+### Export Conversation Activities (PVA API)
+```bash
+bin/pistudio convs export 'conversation-id' -b 'bot_schema' -p dev
+```
+
+### Export Using Dataverse (Fallback)
+```bash
+# 1. List transcripts
+bin/pistudio transcripts -p prod
+
+# 2. Export by transcript ID
+bin/pistudio transcripts export 'guid' -p prod
+```
+
+### Manage Sub-Agents
+```bash
+# List sub-agents
+bin/pistudio agents -b 'bot_schema'
+
+# Export agent config
+bin/pistudio agents get 'bot.agent.Agent_X'
+
+# Create agent
+bin/pistudio agents create 'Name' -b 'bot_schema' --yaml-file config.yaml -p dev
+
+# Update agent
+bin/pistudio agents update 'bot.agent.Agent_X' --field data --value ./config.yaml -p dev
+
+# Delete agent
+bin/pistudio agents delete 'bot.agent.Agent_X' --yes-really-delete --confirm 'bot.agent.Agent_X' -p dev
+```
+
+### Discovery Commands
+```bash
+# List environments
+bin/pistudio envs
+
+# List bots
+bin/pistudio bots -p dev
+
+# Feature flags
+bin/pistudio envs flags 'env-id' -p dev
+```
+
+### Regenerate Analytics
+```bash
+bin/pistudio analytics ./reports/copilot_export_TIMESTAMP
+```
+
+## Profiles
+
+Profiles are defined in `config/copilot-export.json`. Example:
+
+| Profile | Environment | Bot |
+|---------|-------------|-----|
+| `dev` | Development | My Dev Copilot |
+| `prod` | Production | My Prod Copilot |
+
+## When PVA API Fails
+
+If you see DNS resolution errors or the PVA API URL doesn't work:
+
+1. Use `--from-dataverse` mode instead
+2. The Dataverse `conversationtranscripts` table stores the same data
+3. Filter by transcript ID or bot GUID
+
+## Output Files
+
+Exports go to `./reports/copilot_export_TIMESTAMP/`:
+
+| File | Purpose |
+|------|---------|
+| `raw_activities.json` | Source data |
+| `messages.json` | Conversation messages |
+| `search_data.json` | Web searches with citations |
+| `phase_analytics.json` | Per-phase metrics |
+| `dashboard.html` | Interactive visualization |
+| `REPORT.md` | Summary report |
+
+## Trigger Keywords
+
+Use this skill when:
+- Exporting Copilot Studio conversation activities
+- Listing or managing Copilot Studio sub-agents
+- Discovering Power Platform environments and bots
+- Querying Copilot Studio feature flags
+- Generating conversation analytics

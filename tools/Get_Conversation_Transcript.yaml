@@ -1,0 +1,58 @@
+kind: ConnectorAction
+schemaName: my_bot.action.Get_Conversation_Transcript
+displayName: Get Conversation Transcript
+
+# Custom HTTP connector action to call DirectLine API
+# Retrieves full conversation history for the current session
+
+description: |
+  Retrieves the full conversation transcript from the DirectLine API.
+  Returns all messages, tool calls, and knowledge queries from the current session.
+
+connector:
+  name: HTTP with Microsoft Entra ID (preauthorized)
+  connectionReference: shared_webcontents
+
+operation:
+  operationId: InvokeHttp
+  parameters:
+    method: GET
+    uri: "https://YOUR_ENVIRONMENT_ID.environment.api.powerplatform.com/powervirtualagents/botsbyschema/my_bot/directline/conversations/{conversation_id}/activities"
+    headers:
+      Content-Type: application/json
+
+inputs:
+  - name: conversation_id
+    displayName: Conversation ID
+    description: Current conversation ID (from System.Conversation.Id)
+    type: String
+    required: true
+
+outputs:
+  - name: activities
+    displayName: Activities
+    description: Array of conversation activities
+    type: Array
+
+  - name: message_count
+    displayName: Message Count
+    description: Total number of messages in the conversation
+    type: Number
+
+  - name: watermark
+    displayName: Watermark
+    description: Conversation watermark for pagination
+    type: String
+
+aiDescription: |
+  Use this tool to retrieve the full conversation transcript.
+  Pass the current conversation ID from System.Conversation.Id.
+
+  Returns all activities including:
+  - User messages
+  - Bot responses
+  - Tool/agent invocations
+  - Knowledge queries
+  - System events
+
+  Use this for exporting research sessions or debugging.

@@ -1,0 +1,79 @@
+kind: AdaptiveDialog
+modelDescription: >-
+  This tool stores the company name and domain as global variables.
+  The agent extracts these values from conversation context when possible,
+  only asking follow-up questions if the information cannot be determined.
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - set company name
+      - update company domain
+      - store business name
+      - save organization details
+      - change global company info
+      - set global variable for company name
+      - store domain as global variable
+      - update global business information
+      - define company name and website globally
+      - company is {Topic.CompanyName}
+      - the company name is {Topic.CompanyName}
+      - set company to {Topic.CompanyName}
+      - domain is {Topic.Domain}
+
+  actions:
+    # Question nodes with init: prefix enable slot filling
+    # The agent will try to extract from context first,
+    # only asking if not found
+
+    - kind: Question
+      id: question_CompanyName
+      interruptionPolicy:
+        allowInterruption: false
+      variable: init:Topic.CompanyName
+      prompt: What is the company name?
+      entity: StringPrebuiltEntity
+
+    - kind: Question
+      id: question_Domain
+      interruptionPolicy:
+        allowInterruption: false
+      variable: init:Topic.Domain
+      prompt: What is the company domain (e.g., microsoft.com)?
+      entity: StringPrebuiltEntity
+
+    # Set global variables from extracted values
+    - kind: SetVariable
+      id: setVar_GlobalCompanyName
+      variable: Global.CompanyName
+      value: =Topic.CompanyName
+
+    - kind: SetVariable
+      id: setVar_GlobalDomain
+      variable: Global.Domain
+      value: =Topic.Domain
+
+    - kind: SendActivity
+      id: sendActivity_Confirm
+      activity: |
+        ✓ Global variables updated:
+        • Company Name: {Global.CompanyName}
+        • Domain: {Global.Domain}
+
+inputType:
+  properties:
+    CompanyName:
+      displayName: Company Name
+      description: The name of the company to store globally
+      type: String
+      isRequired: true
+
+    Domain:
+      displayName: Company Domain
+      description: The company website domain (e.g., microsoft.com)
+      type: String
+      isRequired: true
+
+outputType: {}

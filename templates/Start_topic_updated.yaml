@@ -1,0 +1,182 @@
+# Start Topic with Derived Flags
+# Updated version that derives HasFDA, HasPatents, HasGovContracts from industry
+#
+# Changes from original:
+# - Added Global.HasFDA (derived from industry)
+# - Added Global.HasPatents (derived from industry)
+# - Added Global.HasGovContracts (derived from industry)
+# - Added Global.SkippedPhases tracking variable
+#
+# These flags enable conditional phase skipping in phase_router
+
+kind: AdaptiveDialog
+modelDescription: Set the CompanyName, CompanyDomainName, CompanyIndustry, CompanyIsPublic, CompanyStockTicker, and CompanyStockMarket values. Also derives HasFDA, HasPatents, and HasGovContracts flags based on industry. Only do this once at the start of every conversation.
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent: {}
+  actions:
+    # ===========================================
+    # Step 1: Clear all variables for fresh start
+    # ===========================================
+    - kind: ClearAllVariables
+      id: z2CWAe
+      variables: AllGlobalVariables
+
+    # ===========================================
+    # Step 2: Extract company data via AI Builder
+    # ===========================================
+    - kind: InvokeAIBuilderModelAction
+      id: invokeAIBuilderModelAction_2xCjmo
+      input:
+        binding:
+          Text_20input: =System.LastMessage.Text
+      output:
+        binding:
+          predictionOutput: Global.CompanyNamestructuredOutput
+      aIModelId: bcc5eb2f-6f18-4f44-a601-5c274e2f0a07
+
+    # ===========================================
+    # Step 3: Set core company variables
+    # ===========================================
+    - kind: SetMultipleVariables
+      id: setVariable_CoreCompanyData
+      assignments:
+        - variable: Global.CompanyName
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.CompanyName
+
+        - variable: Global.CompanyDomain
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.CompanyDomainName
+
+        - variable: Global.Domain
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.CompanyDomainName
+
+        - variable: Global.CompanyIndustry
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.Industry
+
+        - variable: Global.CompanyStockTicker
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.StockTicker
+
+        - variable: Global.CompanyIsPublic
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.IsPublicCompany
+
+        - variable: Global.CompanyStockMarket
+          value: =Global.CompanyNamestructuredOutput.structuredOutput.Market
+
+    # ===========================================
+    # Step 4: Derive industry-based flags
+    # These enable conditional phase skipping
+    # ===========================================
+    - kind: SetMultipleVariables
+      id: setVariable_DerivedFlags
+      assignments:
+        # HasFDA: True for healthcare, pharma, biotech, medical devices
+        - variable: Global.HasFDA
+          value: =Or(
+            Contains(Lower(Global.CompanyIndustry), "healthcare"),
+            Contains(Lower(Global.CompanyIndustry), "health care"),
+            Contains(Lower(Global.CompanyIndustry), "pharmaceutical"),
+            Contains(Lower(Global.CompanyIndustry), "pharma"),
+            Contains(Lower(Global.CompanyIndustry), "biotech"),
+            Contains(Lower(Global.CompanyIndustry), "biotechnology"),
+            Contains(Lower(Global.CompanyIndustry), "medical device"),
+            Contains(Lower(Global.CompanyIndustry), "medical equipment"),
+            Contains(Lower(Global.CompanyIndustry), "life science"),
+            Contains(Lower(Global.CompanyIndustry), "drug"),
+            Contains(Lower(Global.CompanyIndustry), "therapeutics"),
+            Contains(Lower(Global.CompanyIndustry), "diagnostics"),
+            Contains(Lower(Global.CompanyIndustry), "clinical"),
+            Contains(Lower(Global.CompanyIndustry), "hospital"),
+            Contains(Lower(Global.CompanyIndustry), "wellness"),
+            Contains(Lower(Global.CompanyIndustry), "cannabis"),
+            Contains(Lower(Global.CompanyIndustry), "cbd")
+          )
+
+        # HasPatents: True for tech, manufacturing, pharma, automotive
+        - variable: Global.HasPatents
+          value: =Or(
+            Contains(Lower(Global.CompanyIndustry), "technology"),
+            Contains(Lower(Global.CompanyIndustry), "tech"),
+            Contains(Lower(Global.CompanyIndustry), "software"),
+            Contains(Lower(Global.CompanyIndustry), "semiconductor"),
+            Contains(Lower(Global.CompanyIndustry), "chip"),
+            Contains(Lower(Global.CompanyIndustry), "manufacturing"),
+            Contains(Lower(Global.CompanyIndustry), "automotive"),
+            Contains(Lower(Global.CompanyIndustry), "aerospace"),
+            Contains(Lower(Global.CompanyIndustry), "pharmaceutical"),
+            Contains(Lower(Global.CompanyIndustry), "pharma"),
+            Contains(Lower(Global.CompanyIndustry), "biotech"),
+            Contains(Lower(Global.CompanyIndustry), "chemical"),
+            Contains(Lower(Global.CompanyIndustry), "materials"),
+            Contains(Lower(Global.CompanyIndustry), "electronics"),
+            Contains(Lower(Global.CompanyIndustry), "telecom"),
+            Contains(Lower(Global.CompanyIndustry), "energy"),
+            Contains(Lower(Global.CompanyIndustry), "cleantech"),
+            Contains(Lower(Global.CompanyIndustry), "robotics"),
+            Contains(Lower(Global.CompanyIndustry), "ai"),
+            Contains(Lower(Global.CompanyIndustry), "machine learning"),
+            Contains(Lower(Global.CompanyIndustry), "hardware")
+          )
+
+        # HasGovContracts: True for defense, aerospace, government contractors
+        - variable: Global.HasGovContracts
+          value: =Or(
+            Contains(Lower(Global.CompanyIndustry), "defense"),
+            Contains(Lower(Global.CompanyIndustry), "aerospace"),
+            Contains(Lower(Global.CompanyIndustry), "military"),
+            Contains(Lower(Global.CompanyIndustry), "government"),
+            Contains(Lower(Global.CompanyIndustry), "federal"),
+            Contains(Lower(Global.CompanyIndustry), "contractor"),
+            Contains(Lower(Global.CompanyIndustry), "security"),
+            Contains(Lower(Global.CompanyIndustry), "cybersecurity"),
+            Contains(Lower(Global.CompanyIndustry), "infrastructure"),
+            Contains(Lower(Global.CompanyIndustry), "construction"),
+            Contains(Lower(Global.CompanyIndustry), "engineering"),
+            Contains(Lower(Global.CompanyIndustry), "consulting"),
+            Contains(Lower(Global.CompanyIndustry), "it services")
+          )
+
+    # ===========================================
+    # Step 5: Initialize tracking variables
+    # ===========================================
+    - kind: SetMultipleVariables
+      id: setVariable_TrackingVars
+      assignments:
+        - variable: Global.CurrentPhase
+          value: =0
+
+        - variable: Global.CompletedPhases
+          value: ""
+
+        - variable: Global.SkippedPhases
+          value: ""
+
+        - variable: Global.FailedPhases
+          value: ""
+
+    # ===========================================
+    # Step 6: Log derived flags and start research
+    # ===========================================
+    - kind: SendActivity
+      id: sendActivity_StartResearch
+      activity: |-
+        Starting research on {Global.CompanyName} ({Global.CompanyDomain})...
+
+        Industry: {Global.CompanyIndustry}
+        Public Company: {If(Global.CompanyIsPublic, "Yes (" & Global.CompanyStockTicker & ")", "No")}
+
+        Research scope:
+        - SEC Filings: {If(Global.CompanyIsPublic, "Yes", "Skip (private)")}
+        - Patents/IP: {If(Global.HasPatents, "Yes", "Skip (not applicable)")}
+        - FDA Regulations: {If(Global.HasFDA, "Yes", "Skip (not applicable)")}
+        - Government Contracts: {If(Global.HasGovContracts, "Yes", "Skip (not applicable)")}
+
+    # ===========================================
+    # Step 7: Begin phase router
+    # ===========================================
+    - kind: BeginDialog
+      id: begin_phase_router
+      dialog: my_bot.topic.phase_router
+
+inputType: {}
+outputType: {}

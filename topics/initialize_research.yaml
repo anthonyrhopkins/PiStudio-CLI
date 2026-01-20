@@ -1,0 +1,129 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - start research
+      - research company
+      - analyze company
+      - new company profile
+      - begin research
+      - investigate company
+
+  actions:
+    - kind: Question
+      id: askCompanyName
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.CompanyNameInput
+      prompt: What is the company name?
+      entity: StringPrebuiltEntity
+
+    - kind: Question
+      id: askDomain
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.DomainInput
+      prompt: What is the company website domain? (e.g., microsoft.com)
+      entity: StringPrebuiltEntity
+
+    - kind: Question
+      id: askTicker
+      interruptionPolicy:
+        allowInterruption: true
+      variable: Topic.TickerInput
+      prompt: Is this a public company? If yes, provide the stock ticker (or say "private" to skip SEC research)
+      entity: StringPrebuiltEntity
+
+    # Initialize all global variables
+    - kind: SetVariable
+      id: setCompanyName
+      variable: Global.CompanyName
+      value: =Topic.CompanyNameInput
+
+    - kind: SetVariable
+      id: setDomain
+      variable: Global.Domain
+      value: =Topic.DomainInput
+
+    - kind: SetVariable
+      id: setTicker
+      variable: Global.Ticker
+      value: =If(Lower(Topic.TickerInput) = "private", "", Topic.TickerInput)
+
+    - kind: SetVariable
+      id: resetPhaseCount
+      variable: Global.PhaseCount
+      value: =0
+
+    - kind: SetVariable
+      id: resetCompletedPhases
+      variable: Global.CompletedPhases
+      value: =""
+
+    - kind: SetVariable
+      id: resetSkippedPhases
+      variable: Global.SkippedPhases
+      value: =""
+
+    - kind: SetVariable
+      id: resetSkippedCount
+      variable: Global.SkippedCount
+      value: =0
+
+    - kind: SetVariable
+      id: resetFailedPhases
+      variable: Global.FailedPhases
+      value: =""
+
+    - kind: SetVariable
+      id: resetFailedCount
+      variable: Global.FailedCount
+      value: =0
+
+    - kind: SetVariable
+      id: resetFindings
+      variable: Global.ResearchFindings
+      value: =""
+
+    # Auto-skip SEC if private
+    - kind: ConditionGroup
+      id: checkIfPrivate
+      conditions:
+        - id: isPrivate
+          condition: =IsBlank(Global.Ticker)
+          actions:
+            - kind: SetVariable
+              id: skipSEC
+              variable: Global.SkippedPhases
+              value: "Phase 6c - SEC Filings"
+            - kind: SetVariable
+              id: setSkipCount
+              variable: Global.SkippedCount
+              value: =1
+
+    # Initialize the report file in SharePoint
+    - kind: BeginDialog
+      id: initializeReportFile
+      dialog: my_bot.topic.Initialize_Report_File
+
+    - kind: SendActivity
+      id: confirmStart
+      activity: |-
+        🔍 Starting research for {Global.CompanyName}
+        ─────────────────────────────────
+        Domain: {Global.Domain}
+        Ticker: {If(IsBlank(Global.Ticker), "Private company (SEC skipped)", Global.Ticker)}
+        Report: {Global.ReportFilePath}
+
+        Beginning 18-phase research pipeline...
+        Say "show progress" anytime to check status.
+        Say "export transcript" to save conversation history.
+
+inputType:
+  properties: {}
+
+outputType:
+  properties: {}

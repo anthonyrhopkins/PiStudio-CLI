@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bash Syntax Check
+        run: |
+          bash -n bin/pistudio
+          bash -n scripts/export-activities.sh
+
+      - name: Safety Tests
+        run: |
+          ./scripts/test-safety.sh
+

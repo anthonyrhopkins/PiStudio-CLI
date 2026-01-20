@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligence Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           DESIGN SYSTEM - Intelligence Command Center
+           ═══════════════════════════════════════════════════════════════ */
+
+        :root {
+            /* Core palette - Midnight command center */
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1629;
+            --bg-tertiary: #151d35;
+            --bg-card: rgba(15, 22, 41, 0.8);
+
+            /* Accent colors - Vibrant cyber aesthetic */
+            --accent-cyan: #22d3ee;
+            --accent-teal: #2dd4bf;
+            --accent-violet: #a78bfa;
+            --accent-rose: #fb7185;
+            --accent-amber: #fbbf24;
+            --accent-blue: #60a5fa;
+            --accent-emerald: #34d399;
+
+            /* Text hierarchy */
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            /* Borders and effects */
+            --border-subtle: rgba(148, 163, 184, 0.1);
+            --border-glow: rgba(34, 211, 238, 0.3);
+            --glass-bg: rgba(15, 22, 41, 0.7);
+            --glass-border: rgba(148, 163, 184, 0.08);
+
+            /* Shadows */
+            --shadow-glow-cyan: 0 0 30px rgba(34, 211, 238, 0.15);
+            --shadow-glow-violet: 0 0 30px rgba(167, 139, 250, 0.15);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Atmospheric background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 30%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 50% 90%, rgba(251, 113, 133, 0.05) 0%, transparent 50%),
+                linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Noise texture overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem 2.5rem;
+        }
+
+        /* Hero Header */
+        .hero {
+            text-align: center;
+            padding: 3rem 2rem 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 200px;
+            background: radial-gradient(ellipse, rgba(34, 211, 238, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-violet) 50%, var(--accent-rose) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+            position: relative;
+        }
+
+        .hero .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Section Headers */
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 3rem 0 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        h2::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-subtle) 0%, transparent 100%);
+            margin-left: 1rem;
+        }
+
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 900px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Glassmorphism Cards */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-glow-cyan);
+        }
+
+        /* Card accent variants */
+        .card-accent { border-top: 3px solid var(--accent-cyan); }
+        .card-accent-green { border-top: 3px solid var(--accent-teal); }
+        .card-accent-purple { border-top: 3px solid var(--accent-violet); }
+        .card-accent-pink { border-top: 3px solid var(--accent-rose); }
+
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .card-small {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        }
+
+        .chart-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title .icon {
+            font-size: 1.1rem;
+        }
+
+        /* Phase Timeline */
+        .phase-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .phase-item {
+            background: rgba(15, 22, 41, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border-left: 4px solid var(--accent-cyan);
+            transition: all 0.3s ease;
+        }
+
+        .phase-item:hover {
+            background: rgba(15, 22, 41, 0.7);
+            border-color: rgba(148, 163, 184, 0.15);
+            transform: translateX(4px);
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .phase-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .phase-task {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .phase-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .phase-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .phase-metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .phase-metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .phase-metric-value.highlight {
+            color: var(--accent-cyan);
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            height: 4px;
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.25rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.blue { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)); }
+        .progress-fill.purple { background: linear-gradient(90deg, var(--accent-violet), var(--accent-rose)); }
+        .progress-fill.green { background: linear-gradient(90deg, var(--accent-teal), var(--accent-emerald)); }
+
+        /* Tool Badges */
+        .phase-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .tool-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .tool-badge.builtin {
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+        }
+
+        .tool-badge.other {
+            background: rgba(167, 139, 250, 0.1);
+            color: var(--accent-violet);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+
+        .tool-badge:hover {
+            transform: translateY(-1px);
+        }
+
+        .tool-badge.builtin:hover {
+            background: rgba(34, 211, 238, 0.15);
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+        }
+
+        .tool-badge.other:hover {
+            background: rgba(167, 139, 250, 0.15);
+            box-shadow: 0 0 12px rgba(167, 139, 250, 0.2);
+        }
+
+        .tool-count {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        .tool-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        /* Rankings Tables */
+        .rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .rankings-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .rankings-table td {
+            padding: 0.75rem 0.5rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+        }
+
+        .rankings-table tr:hover td {
+            background: rgba(34, 211, 238, 0.03);
+        }
+
+        .rank-badge {
+            font-family: 'JetBrains Mono', monospace;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        tr:nth-child(1) .rank-badge { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0a0e1a; }
+        tr:nth-child(2) .rank-badge { background: linear-gradient(135deg, #94a3b8, #64748b); color: #0a0e1a; }
+        tr:nth-child(3) .rank-badge { background: linear-gradient(135deg, #cd7f32, #b87333); color: #0a0e1a; }
+        tr:nth-child(n+4) .rank-badge { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+            letter-spacing: 0.02em;
+        }
+
+        .tab:hover {
+            color: var(--text-secondary);
+            background: rgba(34, 211, 238, 0.05);
+        }
+
+        .tab.active {
+            color: var(--accent-cyan);
+            background: rgba(34, 211, 238, 0.1);
+            border-color: var(--border-glow);
+            border-bottom-color: transparent;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* Messages */
+        .messages-container {
+            max-height: 800px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .message {
+            background: rgba(15, 22, 41, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .message:hover {
+            background: rgba(15, 22, 41, 0.7);
+        }
+
+        .message.user {
+            border-left: 3px solid var(--accent-teal);
+        }
+
+        .message.bot {
+            border-left: 3px solid var(--accent-violet);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-role {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .message-role.user {
+            background: rgba(45, 212, 191, 0.15);
+            color: var(--accent-teal);
+        }
+
+        .message-role.bot {
+            background: rgba(167, 139, 250, 0.15);
+            color: var(--accent-violet);
+        }
+
+        .message-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .message-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Search Table */
+        .search-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            background: rgba(15, 22, 41, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-select {
+            padding: 0.75rem 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: rgba(15, 22, 41, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .filter-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .search-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .search-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(15, 22, 41, 0.5);
+            position: sticky;
+            top: 0;
+        }
+
+        .search-table td {
+            padding: 1rem 0.75rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+            vertical-align: top;
+        }
+
+        .search-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .search-table tbody tr:hover {
+            background: rgba(34, 211, 238, 0.03);
+        }
+
+        .phase-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .query-cell {
+            max-width: 500px;
+        }
+
+        .results-preview {
+            margin-top: 0.5rem;
+        }
+
+        .search-table .result-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.35rem;
+            transition: color 0.2s;
+        }
+
+        .search-table .result-link:hover { color: var(--accent-teal); text-decoration: underline; }
+
+        .expand-btn {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            color: var(--accent-cyan);
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .expand-btn:hover {
+            background: rgba(34, 211, 238, 0.2);
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+        }
+
+        .table-info {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .footer p {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .footer .time-range {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>Intelligence Command Center</h1>
+            <p class="subtitle">{{GENERATED_INFO}}</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid">
+            <div class="card card-accent">
+                <div class="card-title">Total Activities</div>
+                <div class="card-value">{{TOTAL_ACTIVITIES}}</div>
+            </div>
+            <div class="card card-accent-green">
+                <div class="card-title">Research Phases</div>
+                <div class="card-value">{{TOTAL_PHASES}}</div>
+            </div>
+            <div class="card card-accent-purple">
+                <div class="card-title">Web Searches</div>
+                <div class="card-value">{{TOTAL_SEARCHES}}</div>
+            </div>
+            <div class="card card-accent-pink">
+                <div class="card-title">Duration</div>
+                <div class="card-value" style="font-size: 1.5rem;">{{TOTAL_DURATION}}s</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Messages</div>
+                <div class="card-value">{{TOTAL_MESSAGES}}</div>
+                <div class="card-small">User: {{USER_MESSAGES}} | Bot: {{BOT_MESSAGES}}</div>
+            </div>
+        </div>
+
+        <!-- Phase Analytics Section -->
+        <h2>Research Phase Analytics</h2>
+
+        <div class="grid-2">
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">🔍</span> Searches by Phase</div>
+                <canvas id="searchByPhaseChart" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">⏱️</span> Duration by Phase (seconds)</div>
+                <canvas id="durationByPhaseChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Phase Timeline -->
+        <div class="chart-container">
+            <div class="chart-title"><span class="icon">🔬</span> Research Agent Timeline</div>
+            <div class="phase-timeline" id="phaseTimeline"></div>
+        </div>
+
+        <!-- Rankings -->
+        <div class="grid-3">
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">🏆</span> Top by Searches</div>
+                <table class="rankings-table" id="rankingsBySearches"></table>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">⏰</span> Top by Duration</div>
+                <table class="rankings-table" id="rankingsByDuration"></table>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">📝</span> Top by Observations</div>
+                <table class="rankings-table" id="rankingsByObservations"></table>
+            </div>
+        </div>
+
+        <!-- Tool Usage Section -->
+        <h2>Tool Usage Analytics</h2>
+
+        <div class="grid-2">
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">📊</span> Overall Tool Usage</div>
+                <canvas id="toolChart" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title"><span class="icon">🏷️</span> All Tools</div>
+                <div class="tool-list" id="toolList"></div>
+            </div>
+        </div>
+
+        <!-- Data Explorer Section -->
+        <h2>Data Explorer</h2>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('searches')">All Searches</div>
+            <div class="tab" onclick="switchTab('messages')">Messages</div>
+            <div class="tab" onclick="switchTab('findings')">Phase Findings</div>
+        </div>
+
+        <div id="searches-tab" class="tab-content active">
+            <div class="chart-container">
+                <div class="search-controls">
+                    <input type="text" class="search-input" id="searchFilter" placeholder="Filter by query text...">
+                    <select class="filter-select" id="phaseFilter">
+                        <option value="">All Phases</option>
+                    </select>
+                    <select class="filter-select" id="sortBy">
+                        <option value="timestamp-desc">Newest First</option>
+                        <option value="timestamp-asc">Oldest First</option>
+                        <option value="phase-asc">Phase (0→11)</option>
+                        <option value="phase-desc">Phase (11→0)</option>
+                        <option value="results-desc">Most Results</option>
+                    </select>
+                </div>
+                <div class="table-info" id="tableInfo">Loading...</div>
+                <div style="overflow-x: auto;">
+                    <table class="search-table" id="searchTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="phase" style="width: 100px;">Phase</th>
+                                <th data-sort="timestamp" style="width: 150px;">Time</th>
+                                <th data-sort="query">Search Query</th>
+                                <th data-sort="results" style="width: 80px;">Results</th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="messages-tab" class="tab-content">
+            <div class="messages-container" id="messages"></div>
+        </div>
+
+        <div id="findings-tab" class="tab-content">
+            <div class="chart-container" id="findingsContainer"></div>
+        </div>
+
+        <div class="footer">
+            <p class="time-range">Time Range: {{TIME_START}} → {{TIME_END}}</p>
+            <p>Generated by Copilot Studio CLI</p>
+        </div>
+    </div>
+
+    <script>
+        // Data injected by export script
+        const toolUsage = {{TOOL_USAGE}};
+        const messages = {{MESSAGES}};
+        const phaseSummary = {{PHASE_SUMMARY}};
+        const phaseFindings = {{PHASE_FINDINGS}};
+        const searchData = {{SEARCH_DATA}};
+
+        // Color palette - matching CSS accent colors
+        const colors = [
+            '#22d3ee', // cyan
+            '#2dd4bf', // teal
+            '#a78bfa', // violet
+            '#fb7185', // rose
+            '#fbbf24', // amber
+            '#60a5fa', // blue
+            '#34d399', // emerald
+            '#f472b6', // pink
+            '#818cf8', // indigo
+            '#4ade80', // green
+            '#facc15', // yellow
+            '#f87171'  // red
+        ];
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        // Chart configuration
+        const chartGridColor = 'rgba(148, 163, 184, 0.1)';
+        const chartTickColor = '#64748b';
+
+        // Searches by Phase Chart
+        if (phaseSummary.phases && phaseSummary.phases.length > 0) {
+            const searchCtx = document.getElementById('searchByPhaseChart').getContext('2d');
+            new Chart(searchCtx, {
+                type: 'bar',
+                data: {
+                    labels: phaseSummary.phases.map(p => 'Phase ' + p.phase),
+                    datasets: [{
+                        label: 'Searches',
+                        data: phaseSummary.phases.map(p => p.search_count),
+                        backgroundColor: phaseSummary.phases.map((_, i) => colors[i % colors.length] + '80'),
+                        borderColor: phaseSummary.phases.map((_, i) => colors[i % colors.length]),
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => phaseSummary.phases[items[0].dataIndex].task
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: chartGridColor }, ticks: { color: chartTickColor } },
+                        x: { grid: { display: false }, ticks: { color: chartTickColor } }
+                    }
+                }
+            });
+
+            // Duration by Phase Chart
+            const durationCtx = document.getElementById('durationByPhaseChart').getContext('2d');
+            new Chart(durationCtx, {
+                type: 'bar',
+                data: {
+                    labels: phaseSummary.phases.map(p => 'Phase ' + p.phase),
+                    datasets: [{
+                        label: 'Duration (s)',
+                        data: phaseSummary.phases.map(p => p.duration_seconds),
+                        backgroundColor: phaseSummary.phases.map((_, i) => colors[(i + 3) % colors.length] + '80'),
+                        borderColor: phaseSummary.phases.map((_, i) => colors[(i + 3) % colors.length]),
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => phaseSummary.phases[items[0].dataIndex].task
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: chartGridColor }, ticks: { color: chartTickColor } },
+                        x: { grid: { display: false }, ticks: { color: chartTickColor } }
+                    }
+                }
+            });
+
+            // Phase Timeline
+            const timeline = document.getElementById('phaseTimeline');
+            const maxSearches = Math.max(...phaseSummary.phases.map(p => p.search_count), 1);
+            const maxDuration = Math.max(...phaseSummary.phases.map(p => p.duration_seconds), 1);
+
+            phaseSummary.phases.forEach((phase, i) => {
+                const findings = phaseFindings.find(f => f.phase === phase.phase);
+                const findingsHtml = findings && findings.findings.length > 0
+                    ? '<div class="phase-findings">' + findings.findings.slice(0, 3).map((f, idx) =>
+                        '<div class="phase-finding" style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">' +
+                        f.substring(0, 800) + (f.length > 800 ? '...' : '') + '</div>'
+                      ).join('') +
+                      (findings.findings.length > 3 ? '<div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">+ ' + (findings.findings.length - 3) + ' more findings (see Findings tab)</div>' : '') +
+                      '</div>'
+                    : '';
+
+                const toolsHtml = phase.tool_usage && phase.tool_usage.length > 0
+                    ? '<div class="phase-tools">' + phase.tool_usage.slice(0, 5).map(t =>
+                        '<span class="tool-badge ' + (t.tool.startsWith('P:') ? 'builtin' : 'other') + '">' +
+                        t.tool.replace('P:', '').split('.').pop() +
+                        '<span class="tool-count">' + t.count + '</span></span>'
+                      ).join('') + '</div>'
+                    : '';
+
+                timeline.innerHTML += `
+                    <div class="phase-item" style="border-left-color: ${colors[i % colors.length]}">
+                        <div class="phase-header">
+                            <span class="phase-number" style="background: ${colors[i % colors.length]}">${'Phase ' + phase.phase}</span>
+                            <span class="phase-task">${phase.task}</span>
+                        </div>
+                        <div class="phase-metrics">
+                            <div class="phase-metric">
+                                <span class="phase-metric-label">Searches</span>
+                                <span class="phase-metric-value highlight">${phase.search_count}</span>
+                                <div class="progress-bar" style="width: 80px;">
+                                    <div class="progress-fill blue" style="width: ${(phase.search_count / maxSearches) * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="phase-metric">
+                                <span class="phase-metric-label">Duration</span>
+                                <span class="phase-metric-value">${phase.duration_seconds}s</span>
+                                <div class="progress-bar" style="width: 80px;">
+                                    <div class="progress-fill purple" style="width: ${(phase.duration_seconds / maxDuration) * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="phase-metric">
+                                <span class="phase-metric-label">Observations</span>
+                                <span class="phase-metric-value">${phase.observations}</span>
+                            </div>
+                            <div class="phase-metric">
+                                <span class="phase-metric-label">Activities</span>
+                                <span class="phase-metric-value">${phase.total_activities}</span>
+                            </div>
+                        </div>
+                        ${toolsHtml}
+                        ${findingsHtml}
+                    </div>
+                `;
+            });
+
+            // Rankings tables
+            function renderRankings(elementId, data, valueKey, valueLabel) {
+                const table = document.getElementById(elementId);
+                table.innerHTML = '<tr><th>#</th><th>Phase</th><th>' + valueLabel + '</th></tr>';
+                data.slice(0, 5).forEach((item, i) => {
+                    table.innerHTML += `
+                        <tr>
+                            <td><span class="rank-badge">${i + 1}</span></td>
+                            <td>${item.task.substring(0, 30)}</td>
+                            <td>${item[valueKey]}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            if (phaseSummary.rankings) {
+                renderRankings('rankingsBySearches', phaseSummary.rankings.by_searches, 'searches', 'Searches');
+                renderRankings('rankingsByDuration', phaseSummary.rankings.by_duration, 'duration', 'Duration (s)');
+                renderRankings('rankingsByObservations', phaseSummary.rankings.by_observations, 'observations', 'Observations');
+            }
+        }
+
+        // Tool usage chart
+        const toolCtx = document.getElementById('toolChart').getContext('2d');
+        new Chart(toolCtx, {
+            type: 'doughnut',
+            data: {
+                labels: toolUsage.slice(0, 8).map(t => t.tool.replace('P:', '').split('.').pop()),
+                datasets: [{
+                    data: toolUsage.slice(0, 8).map(t => t.count),
+                    backgroundColor: colors.slice(0, 8).map(c => c + '80'),
+                    borderColor: colors.slice(0, 8),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right', labels: { color: chartTickColor, padding: 15 } }
+                }
+            }
+        });
+
+        // Tool badges
+        const toolList = document.getElementById('toolList');
+        toolUsage.forEach(t => {
+            const badge = document.createElement('span');
+            badge.className = 'tool-badge ' + t.category;
+            badge.innerHTML = t.tool.replace('P:', '').split('.').pop() + '<span class="tool-count">' + t.count + '</span>';
+            toolList.appendChild(badge);
+        });
+
+        // Messages
+        const messagesDiv = document.getElementById('messages');
+        messages.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'message ' + m.role;
+            div.innerHTML = `
+                <div class="message-header">
+                    <span class="message-role ${m.role}">${m.role}</span>
+                    <span class="message-time">${new Date(m.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="message-text">${(m.text || '[No text]').substring(0, 2000)}</div>
+            `;
+            messagesDiv.appendChild(div);
+        });
+
+        // Findings by phase - full content with expandable sections
+        const findingsContainer = document.getElementById('findingsContainer');
+        phaseFindings.forEach((phase, i) => {
+            if (phase.findings && phase.findings.length > 0) {
+                findingsContainer.innerHTML += `
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(15, 22, 41, 0.5); border-radius: 8px; border-left: 4px solid ${colors[i % colors.length]}">
+                        <div style="font-weight: 600; color: ${colors[i % colors.length]}; margin-bottom: 0.75rem; font-size: 1.1rem;">
+                            Phase ${phase.phase}: ${phase.task}
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">${phase.findings.length} finding(s)</div>
+                        ${phase.findings.map((f, idx) => `
+                            <div style="color: var(--text-secondary); margin-bottom: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">
+                                ${f}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        });
+
+        // ========== SEARCH DATA TABLE ==========
+        let filteredSearchData = [...searchData];
+        let currentSort = { field: 'timestamp', dir: 'desc' };
+        const expandedRows = new Set();
+
+        // Populate phase filter dropdown
+        const phaseFilter = document.getElementById('phaseFilter');
+        const uniquePhases = [...new Set(searchData.map(s => s.phase))].sort((a, b) => a - b);
+        uniquePhases.forEach(phase => {
+            const opt = document.createElement('option');
+            opt.value = phase;
+            const phaseInfo = phaseSummary.phases?.find(p => p.phase === phase);
+            opt.textContent = 'Phase ' + phase + (phaseInfo ? ': ' + phaseInfo.task.substring(0, 30) + '...' : '');
+            phaseFilter.appendChild(opt);
+        });
+
+        function formatTime(ts) {
+            const d = new Date(ts);
+            return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function renderSearchTable() {
+            const tbody = document.getElementById('searchTableBody');
+            const tableInfo = document.getElementById('tableInfo');
+
+            if (filteredSearchData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-results">No searches match your filters</td></tr>';
+                tableInfo.textContent = '0 searches found';
+                return;
+            }
+
+            tableInfo.textContent = filteredSearchData.length + ' of ' + searchData.length + ' searches';
+
+            tbody.innerHTML = filteredSearchData.map((search, idx) => {
+                const isExpanded = expandedRows.has(search.id);
+                const phaseColor = colors[search.phase % colors.length];
+
+                const citationsHtml = search.citations && search.citations.length > 0
+                    ? search.citations.slice(0, isExpanded ? 20 : 3).map(c =>
+                        '<a href="' + (c.url || '#') + '" target="_blank" class="result-link" title="' + (c.source || '') + '">' +
+                        (c.title || c.url || 'Link').substring(0, 60) + (c.title && c.title.length > 60 ? '...' : '') + '</a>'
+                    ).join('') +
+                    (search.citations.length > 3 && !isExpanded ? '<button class="expand-btn" onclick="toggleExpand(' + search.id + ')">+ ' + (search.citations.length - 3) + ' more</button>' : '')
+                    : '<span style="color: var(--text-muted); font-size: 0.8rem;">No citations</span>';
+
+                return `
+                    <tr data-id="${search.id}">
+                        <td>
+                            <span class="phase-badge" style="background: ${phaseColor}20; color: ${phaseColor}; border: 1px solid ${phaseColor}40;">
+                                Phase ${search.phase}
+                            </span>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">${(search.phase_task || '').substring(0, 25)}...</div>
+                        </td>
+                        <td style="white-space: nowrap; color: var(--text-secondary);">${formatTime(search.timestamp)}</td>
+                        <td class="query-cell">
+                            <div style="color: var(--text-primary); margin-bottom: 0.5rem;">${search.query}</div>
+                            <div class="results-preview">${citationsHtml}</div>
+                        </td>
+                        <td style="text-align: center;">
+                            <span style="font-size: 1.25rem; font-weight: 600; color: ${search.citations?.length > 5 ? 'var(--accent-emerald)' : search.citations?.length > 0 ? 'var(--accent-amber)' : 'var(--text-muted)'};">
+                                ${search.citations?.length || 0}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleExpand(id) {
+            if (expandedRows.has(id)) {
+                expandedRows.delete(id);
+            } else {
+                expandedRows.add(id);
+            }
+            renderSearchTable();
+        }
+
+        function applyFilters() {
+            const textFilter = document.getElementById('searchFilter').value.toLowerCase();
+            const phaseValue = document.getElementById('phaseFilter').value;
+            const sortValue = document.getElementById('sortBy').value;
+
+            filteredSearchData = searchData.filter(s => {
+                const matchesText = !textFilter || s.query.toLowerCase().includes(textFilter);
+                const matchesPhase = !phaseValue || s.phase == phaseValue;
+                return matchesText && matchesPhase;
+            });
+
+            // Apply sorting
+            const [field, dir] = sortValue.split('-');
+            filteredSearchData.sort((a, b) => {
+                let valA, valB;
+                switch (field) {
+                    case 'timestamp':
+                        valA = new Date(a.timestamp).getTime();
+                        valB = new Date(b.timestamp).getTime();
+                        break;
+                    case 'phase':
+                        valA = a.phase;
+                        valB = b.phase;
+                        break;
+                    case 'results':
+                        valA = a.citations?.length || 0;
+                        valB = b.citations?.length || 0;
+                        break;
+                    default:
+                        valA = a[field];
+                        valB = b[field];
+                }
+                return dir === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+            });
+
+            renderSearchTable();
+        }
+
+        // Event listeners for filters
+        document.getElementById('searchFilter').addEventListener('input', applyFilters);
+        document.getElementById('phaseFilter').addEventListener('change', applyFilters);
+        document.getElementById('sortBy').addEventListener('change', applyFilters);
+
+        // Make toggleExpand available globally
+        window.toggleExpand = toggleExpand;
+
+        // Initial render
+        applyFilters();
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+kind: AdaptiveDialog
+
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent:
+    triggerQueries:
+      - log research findings
+      - record my findings
+      - add new research data
+      - save experiment results
+      - document observations
+      - enter study outcomes
+      - update research log
+      - submit findings to logger
+      - store analysis results
+
+  actions:
+    - kind: SetVariable
+      id: setVariable_SyhOji
+      variable: Global.ResearchFindings
+      value: Global.ResearchFindings & " | " & Topic.CompanyName & ":" & Topic.Var1 & ":" & Topic.Var2 & ":" & Topic.Var3 & ":" & Topic.Var4
+
+    - kind: SendActivity
+      id: sendMessage_confirmation
+      activity: Research findings logged for {Topic.CompanyName} - Phase: {Topic.Var1}, Type: {Topic.Var2}
+
+inputType:
+  properties:
+    CompanyName:
+      displayName: CompanyName
+      description: The name of the company being researched
+      type: String
+
+    Var1:
+      displayName: Var1
+      description: The research phase name (e.g., leadership, financial, developments)
+      type: String
+
+    Var2:
+      displayName: Var2
+      description: Type of finding (e.g., executive, social_profile, news, patent)
+      type: String
+
+    Var3:
+      displayName: Var3
+      description: The actual finding data as JSON string
+      type: String
+
+    Var4:
+      displayName: Var4
+      description: Confidence level (high, medium, low)
+      type: String
+
+outputType:
+  properties:
+    Var1:
+      displayName: Var1
+      type: String
+
+    Var2:
+      displayName: Var2
+      type: String
+
+    Var4:
+      displayName: Var4
+      type: String
