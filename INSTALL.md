@@ -194,7 +194,33 @@ Expected output:
 
 ## Running on Windows
 
-### Option 1: Git Bash (Recommended)
+### Quick Install (Recommended)
+
+Run the automated installer from PowerShell:
+
+```powershell
+# Clone the repo first
+git clone https://github.com/anthonyrhopkins/PiStudio-CLI.git
+cd PiStudio-CLI
+
+# Run installer (may need -ExecutionPolicy Bypass)
+powershell -ExecutionPolicy Bypass -File scripts/install-windows.ps1
+```
+
+The installer will:
+1. Verify Git for Windows is installed
+2. Download jq.exe to the bin/ directory
+3. Add pistudio alias to your PowerShell profile
+4. Create config file from template
+5. Run doctor to verify setup
+
+**Then restart PowerShell** and the `pistudio` command will be available globally.
+
+### Manual Installation
+
+If you prefer manual setup or the installer fails:
+
+#### Option 1: Git Bash (Easiest)
 
 **Easiest approach** — Git Bash provides a full Unix-like environment on Windows:
 
@@ -208,7 +234,7 @@ cd /c/Users/YourName/copilot-studio-cli
 ./bin/pistudio login -p dev
 ```
 
-### Option 2: Windows Subsystem for Linux (WSL)
+#### Option 3: Windows Subsystem for Linux (WSL)
 
 For a full Linux environment on Windows:
 
@@ -221,35 +247,51 @@ cd /mnt/c/Users/YourName/copilot-studio-cli
 ./bin/pistudio doctor
 ```
 
-### Option 3: PowerShell / cmd.exe (via Git Bash shim)
+#### Option 2: PowerShell with Git Bash Backend
 
-**Requires Git for Windows** — A PowerShell shim (`bin/pistudio.ps1`) automatically finds Git Bash and delegates all commands to it. You stay in PowerShell but the CLI runs in Bash under the hood.
+**Uses the PowerShell shim (`pistudio.ps1`)** which automatically delegates to Git Bash. You run commands in PowerShell but bash executes under the hood.
 
-1. Install [Git for Windows](https://git-scm.com/download/win) (provides `bash.exe`)
-2. Install `jq` (see Prerequisites above)
-3. Run from PowerShell or cmd.exe:
+**Prerequisites:**
+1. Install [Git for Windows](https://git-scm.com/download/win)
+2. Install jq (the installer downloads it automatically, or manually via Chocolatey: `choco install jq`)
+
+**Setup:**
 
 ```powershell
-# PowerShell
+# Add pistudio function to your PowerShell profile
+$repoPath = "$env:USERPROFILE\PiStudio-CLI"  # Adjust if you cloned elsewhere
+Add-Content $PROFILE "`nfunction pistudio { & `"$repoPath\bin\pistudio.ps1`" @args }"
+
+# Restart PowerShell, then run:
+pistudio doctor
+pistudio login -p dev
+```
+
+**Known Issues Fixed:**
+- ✅ "Bad file descriptor" error - Fixed by using Process.Start instead of `&` operator
+- ✅ Wrong bash.exe - Now prioritizes `Git\bin\bash.exe` over `Git\usr\bin\bash.exe`
+- ✅ jq not found - Installer downloads jq.exe to bin/ directory
+- ✅ Empty arguments error - Fixed argument handling in shim
+
+**Alternatively, run commands directly:**
+
+```powershell
+# Without the alias, invoke the shim explicitly:
 .\bin\pistudio.ps1 doctor
 .\bin\pistudio.ps1 login -p dev
-.\bin\pistudio.ps1 envs
-
-# cmd.exe
-bin\pistudio.cmd doctor
 ```
 
-**Add to PATH for global access:**
+### Troubleshooting Windows Issues
 
-```powershell
-# Add to your PowerShell profile for a pistudio alias
-Add-Content $PROFILE 'function pistudio { & "$env:USERPROFILE\copilot-studio-cli\bin\pistudio.ps1" @args }'
-
-# Or add the bin\ directory to system PATH
-[Environment]::SetEnvironmentVariable("PATH", "$env:PATH;C:\Users\YourName\copilot-studio-cli\bin", "User")
-```
-
-After adding to PATH, `pistudio.cmd` is picked up automatically so `pistudio` works in both PowerShell and cmd.exe.
+| Issue | Solution |
+|-------|----------|
+| **"Bad file descriptor" error** | Updated pistudio.ps1 uses Process.Start - pull latest changes |
+| **jq: command not found** | Run `scripts/install-windows.ps1` to auto-download jq.exe |
+| **Git Bash not found** | Install [Git for Windows](https://git-scm.com/download/win) |
+| **Wrong bash.exe (usr/bin vs bin)** | Shim now prioritizes `Git\bin\bash.exe` - update pistudio.ps1 |
+| **Empty arguments cause errors** | Fixed in latest pistudio.ps1 - update from repo |
+| **Execution policy blocks scripts** | Run: `powershell -ExecutionPolicy Bypass -File script.ps1` |
+| **pistudio not found after setup** | Restart PowerShell to reload $PROFILE |
 
 ### Why Git Bash?
 
@@ -370,6 +412,19 @@ chmod +x bin/pistudio
 
 ### "jq: command not found"
 
+**Windows:**
+```powershell
+# Option 1: Run the installer (auto-downloads to bin/)
+powershell -ExecutionPolicy Bypass -File scripts/install-windows.ps1
+
+# Option 2: Chocolatey (requires admin)
+choco install jq
+
+# Option 3: Manual download
+# Download from https://jqlang.github.io/jq/download/
+# Save as C:\Windows\System32\jq.exe or add to PATH
+```
+
 **macOS:**
 ```bash
 brew install jq
@@ -401,10 +456,35 @@ chmod +x bin/pistudio scripts/*.sh
 ```bash
 # Clear tokens and re-authenticate
 rm ~/.config/pistudio/tokens/dev.json
+
+# Windows (PowerShell):
+# Remove-Item "$env:USERPROFILE\.config\pistudio\tokens\dev.json"
+
 pistudio login -p dev
 
 # Check tenant ID matches your Azure AD tenant
 pistudio status -p dev
+```
+
+### "Bad file descriptor" (Windows PowerShell)
+
+This error occurs when PowerShell's `&` operator pipes to bash.exe incorrectly.
+
+**Solution:** Update pistudio.ps1 to the latest version from the repo (uses Process.Start instead):
+
+```powershell
+cd PiStudio-CLI
+git pull origin main
+```
+
+### Wrong bash.exe found (Git\usr\bin vs Git\bin)
+
+Git for Windows includes two bash binaries. `usr\bin\bash.exe` causes pipe issues from PowerShell.
+
+**Solution:** Updated pistudio.ps1 prioritizes `Git\bin\bash.exe` - pull latest changes:
+
+```powershell
+git pull origin main
 ```
 
 ### "Unable to resolve environment URL"

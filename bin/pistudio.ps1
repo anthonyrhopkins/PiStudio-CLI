@@ -21,13 +21,8 @@ $ErrorActionPreference = 'Stop'
 
 # ─── Locate bash.exe from Git for Windows ─────────────────────
 function Find-GitBash {
-    # 1. Check PATH first
-    $inPath = Get-Command bash.exe -ErrorAction SilentlyContinue
-    if ($inPath -and $inPath.Source -match 'Git') {
-        return $inPath.Source
-    }
-
-    # 2. Common install locations
+    # 1. Common install locations (prefer Git\bin over Git\usr\bin)
+    # Git\usr\bin\bash.exe causes "Bad file descriptor" errors when invoked from PowerShell
     $candidates = @(
         "$env:ProgramFiles\Git\bin\bash.exe",
         "${env:ProgramFiles(x86)}\Git\bin\bash.exe",
@@ -41,7 +36,7 @@ function Find-GitBash {
         }
     }
 
-    # 3. Check registry (user + machine installs)
+    # 2. Check registry (user + machine installs)
     $regPaths = @(
         'HKLM:\SOFTWARE\GitForWindows',
         'HKCU:\SOFTWARE\GitForWindows'
@@ -54,6 +49,12 @@ function Find-GitBash {
                 if (Test-Path $bash) { return $bash }
             }
         } catch {}
+    }
+
+    # 3. Fall back to PATH (may find Git\usr\bin\bash.exe which causes issues)
+    $inPath = Get-Command bash.exe -ErrorAction SilentlyContinue
+    if ($inPath -and $inPath.Source -match 'Git') {
+        return $inPath.Source
     }
 
     return $null
@@ -96,12 +97,33 @@ $bashScript = ConvertTo-BashPath (Join-Path $repoRoot 'bin' 'pistudio')
 
 # ─── Execute ───────────────────────────────────────────────────
 # Pass all arguments through. Use --login so bash reads profiles.
-$escapedArgs = $Arguments | ForEach-Object {
-    # Escape single quotes for bash
-    $_ -replace "'", "'\\''"
+$argString = ''
+if ($Arguments -and $Arguments.Count -gt 0) {
+    $escapedArgs = $Arguments | ForEach-Object {
+        # Escape single quotes for bash
+        $_ -replace "'", "'\\''"
+    }
+    $argString = ($escapedArgs | ForEach-Object { "'$_'" }) -join ' '
 }
-$argString = ($escapedArgs | ForEach-Object { "'$_'" }) -join ' '
 
-# Run the script directly (not sourced) so BASH_SOURCE resolves correctly
-& $bash --login -c "'$bashScript' $argString"
-exit $LASTEXITCODE
+# Add PiStudio bin dir to PATH so jq.exe (if bundled) is available to bash
+$binDir = Join-Path $repoRoot 'bin'
+
+# Use Process.Start with redirected streams to avoid PowerShell pipe encoding
+# issues ("Bad file descriptor") when invoking bash.exe directly via & operator.
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName = $bash
+$psi.Arguments = "--login -c `"export PATH='$(ConvertTo-BashPath $binDir)':`$PATH; '$bashScript' $argString`""
+$psi.UseShellExecute = $false
+$psi.RedirectStandardOutput = $true
+$psi.RedirectStandardError = $true
+
+$process = [System.Diagnostics.Process]::Start($psi)
+# Read streams to avoid deadlocks
+$stdout = $process.StandardOutput.ReadToEnd()
+$stderr = $process.StandardError.ReadToEnd()
+$process.WaitForExit()
+
+if ($stdout) { Write-Host $stdout }
+if ($stderr) { [Console]::Error.Write($stderr) }
+exit $process.ExitCode
