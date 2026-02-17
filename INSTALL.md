@@ -221,19 +221,35 @@ cd /mnt/c/Users/YourName/copilot-studio-cli
 ./bin/pistudio doctor
 ```
 
-### Option 3: PowerShell (Advanced)
+### Option 3: PowerShell / cmd.exe (via Git Bash shim)
 
-**Not officially supported** — the scripts are designed for Bash. If you must use PowerShell:
+**Requires Git for Windows** — A PowerShell shim (`bin/pistudio.ps1`) automatically finds Git Bash and delegates all commands to it. You stay in PowerShell but the CLI runs in Bash under the hood.
 
-1. Install jq (see Prerequisites above)
-2. Call the underlying script directly:
+1. Install [Git for Windows](https://git-scm.com/download/win) (provides `bash.exe`)
+2. Install `jq` (see Prerequisites above)
+3. Run from PowerShell or cmd.exe:
 
 ```powershell
-# Syntax check first
-bash -c "./bin/pistudio doctor"
+# PowerShell
+.\bin\pistudio.ps1 doctor
+.\bin\pistudio.ps1 login -p dev
+.\bin\pistudio.ps1 envs
 
-# Most commands require Git Bash or WSL for full compatibility
+# cmd.exe
+bin\pistudio.cmd doctor
 ```
+
+**Add to PATH for global access:**
+
+```powershell
+# Add to your PowerShell profile for a pistudio alias
+Add-Content $PROFILE 'function pistudio { & "$env:USERPROFILE\copilot-studio-cli\bin\pistudio.ps1" @args }'
+
+# Or add the bin\ directory to system PATH
+[Environment]::SetEnvironmentVariable("PATH", "$env:PATH;C:\Users\YourName\copilot-studio-cli\bin", "User")
+```
+
+After adding to PATH, `pistudio.cmd` is picked up automatically so `pistudio` works in both PowerShell and cmd.exe.
 
 ### Why Git Bash?
 
