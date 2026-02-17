@@ -216,6 +216,8 @@ The installer will:
 
 **Then restart PowerShell** and the `pistudio` command will be available globally.
 
+**For AI agents installing on Windows:** See [docs/WINDOWS-GOTCHAS.md](docs/WINDOWS-GOTCHAS.md) for common issues when using the Bash tool on Windows.
+
 ### Manual Installation
 
 If you prefer manual setup or the installer fails:

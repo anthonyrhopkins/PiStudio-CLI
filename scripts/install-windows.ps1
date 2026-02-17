@@ -164,6 +164,11 @@ try {
     Write-Host "  3. Run: pistudio login -p dev" -ForegroundColor White
     Write-Host "  4. Run: pistudio doctor -p dev" -ForegroundColor White
     Write-Host ""
+    Write-Host "Troubleshooting:" -ForegroundColor Yellow
+    Write-Host "  - If 'pistudio' not found: Close and reopen PowerShell" -ForegroundColor White
+    Write-Host "  - If jq errors persist: Check bin\jq.exe exists and is v1.7.1+" -ForegroundColor White
+    Write-Host "  - For AI agents: See docs/WINDOWS-GOTCHAS.md" -ForegroundColor White
+    Write-Host ""
 } catch {
     Write-Host ""
     Write-Host "  [✗] Doctor failed: $_" -ForegroundColor Red
