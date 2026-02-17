@@ -2602,8 +2602,14 @@ outputType:
       type: String"
     fi
 
+    # Extract description from YAML beginDialog.description if available
+    AGENT_DESC=$(echo "$YAML_DATA" | grep -A1 'beginDialog:' | grep 'description:' | sed 's/.*description: *//' | head -1)
+    if [ -z "$AGENT_DESC" ]; then
+        AGENT_DESC="Created via CLI"
+    fi
+
     # Create the agent
-    RESULT=$(create_agent "$DATAVERSE_URL" "$AGENT_NAME" "$PARENT_BOT_ID" "$BOT_ID" "$YAML_DATA" "Created via CLI")
+    RESULT=$(create_agent "$DATAVERSE_URL" "$AGENT_NAME" "$PARENT_BOT_ID" "$BOT_ID" "$YAML_DATA" "$AGENT_DESC")
 
     # Extract HTTP status code (last line)
     HTTP_CODE=$(echo "$RESULT" | tail -1)
